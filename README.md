@@ -27,6 +27,17 @@ Focus area: California Bay Area and Pacific coast (north of San Simeon)
 - **Web mapping**: Leaflet.js, Mapbox GL JS, or OpenLayers
 - **Basemap**: OpenStreetMap or satellite imagery
 
+## Running Scripts
+
+Scripts can be run using `uv` which automatically manages Python dependencies:
+
+```bash
+uv run --with rasterio --with numpy python scripts/<script_name>.py
+```
+
+Example scripts:
+- `scripts/check_prism_precipitation.py` - Sanity check PRISM precipitation data at Oakland, CA
+
 ## Data Sources
 
 ### Current Redwood Detection
