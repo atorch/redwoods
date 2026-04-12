@@ -220,3 +220,5 @@ data/**/*shp
 data/**/*dbf
 data/**/*shx
 data/**/*cpg
+
+data/*~

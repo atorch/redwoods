@@ -32,11 +32,28 @@ Focus area: California Bay Area and Pacific coast (north of San Simeon)
 Scripts can be run using `uv` which automatically manages Python dependencies:
 
 ```bash
-uv run --with rasterio --with numpy python scripts/<script_name>.py
+uv run python scripts/<script_name>.py
 ```
 
-Example scripts:
+For scripts needing extra dependencies:
+```bash
+uv run --with rasterio --with pandas --with shapely python scripts/<script_name>.py
+```
+
+### Available Scripts
+
+**Data verification:**
 - `scripts/check_prism_precipitation.py` - Sanity check PRISM precipitation data at Oakland, CA
+
+**Prototype pipeline (Ticket #00):**
+- `scripts/01_process_bay_area_rainfall.py` - Process PRISM wet season rainfall, create 20" threshold layer
+- `scripts/02_download_goes16_sample_days.py` - Download sample GOES-16 fog data (July 2024)
+- `scripts/03_process_fog_btd.py` - Process GOES-16 BTD and count fog days (coming soon)
+- `scripts/04_combine_suitability.py` - Combine rainfall + fog into final suitability layer (coming soon)
+- `scripts/05_generate_web_viz.py` - Generate web visualization (coming soon)
+
+**GOES-16 utilities:**
+- `scripts/download_goes16_fog_data.py` - Example GOES-16 download script
 
 ## Data Sources
 
