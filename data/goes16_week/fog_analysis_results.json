@@ -1,0 +1,40 @@
+{
+  "processing_date": "unknown",
+  "sample_days": 7,
+  "fog_days_observed": 8,
+  "estimated_dry_season_fog_days": 210,
+  "fog_day_list": [
+    {
+      "year": 2024,
+      "doy": 197
+    },
+    {
+      "year": 2024,
+      "doy": 198
+    },
+    {
+      "year": 2024,
+      "doy": 199
+    },
+    {
+      "year": 2024,
+      "doy": 200
+    },
+    {
+      "year": 2024,
+      "doy": 201
+    },
+    {
+      "year": 2024,
+      "doy": 202
+    },
+    {
+      "year": 2024,
+      "doy": 203
+    },
+    {
+      "year": 2024,
+      "doy": 204
+    }
+  ]
+}

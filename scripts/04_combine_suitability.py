@@ -9,7 +9,14 @@ and the place has more than 20 inches/year of rain in the wet season, it had red
 For Bay Area prototype:
 - Geographic filter: All pixels are north of San Simeon (37° > 35.6°) - always TRUE
 - Rainfall: >= 20 inches Nov-Apr
-- Fog: >= 80 days/dry season with afternoon fog
+- Fog: >= 80 days/dry season (GOES-16 satellite BTD detection)
+
+IMPORTANT LIMITATION (v0):
+- Current fog layer uses NIGHTTIME-ONLY BTD (Brightness Temperature Difference) detection
+- BTD only works at night (06-12 UTC = 11pm-5am PST) due to solar contamination of Ch7 during day
+- This represents nighttime/pre-dawn fog frequency, not full 24-hour fog
+- Future enhancement needed: daytime fog detection using visible channels (see Ticket #22)
+- For v0 web tiles, we accept this limitation and label as "nighttime fog frequency"
 
 Final suitability = rainfall_suitable AND fog_suitable
 """
@@ -23,7 +30,10 @@ from rasterio.transform import rowcol
 # Configuration
 OUTPUT_DIR = Path("outputs")
 RAINFALL_FILE = OUTPUT_DIR / "bay_area_rainfall_20in.tif"
-FOG_FILE = OUTPUT_DIR / "bay_area_fog_80days.tif"
+
+# GOES-16 fog layer (real satellite data, nighttime BTD detection)
+FOG_FILE = OUTPUT_DIR / "bay_area_fog_80days_goes16.tif"
+
 OUTPUT_FILE = OUTPUT_DIR / "bay_area_redwood_suitable.tif"
 GROUND_TRUTH_FILE = Path("data/redwood_ground_truth_points.csv")
 
@@ -144,7 +154,7 @@ def generate_summary_stats(suitable, rainfall_file, fog_file):
     with rasterio.open(rainfall_file.replace('_20in.tif', '_total.tif')) as src:
         rainfall_total = src.read(1)
 
-    with rasterio.open(fog_file.replace('_80days.tif', '_days_estimate.tif')) as src:
+    with rasterio.open(fog_file.replace('_80days_goes16.tif', '_days_goes16.tif')) as src:
         fog_days = src.read(1)
 
     # Get stats for suitable areas only
@@ -171,8 +181,10 @@ def main():
     print("  2. Wet season rainfall >= 20 inches")
     print("  3. Afternoon fog >= 80 days/dry season")
     print()
-    print("NOTE: Fog data is MOCK (coastal proximity model)")
-    print("      For production, use real GOES-16 BTD analysis")
+
+    print(f"Fog data source: GOES-16 satellite nighttime BTD analysis")
+    print(f"Fog file: {FOG_FILE.name}")
+    print(f"Fog detection: Nighttime only (06-12 UTC = 11pm-5am PST)")
     print()
 
     # Combine layers
@@ -188,10 +200,10 @@ def main():
     print(f"\nOutput files:")
     print(f"  - {OUTPUT_FILE}")
     print(f"  - {OUTPUT_DIR}/bay_area_rainfall_total.tif")
-    print(f"  - {OUTPUT_DIR}/bay_area_fog_days_estimate.tif")
+    print(f"  - {OUTPUT_DIR}/bay_area_fog_days_goes16.tif")
     print()
-    print("Next step: Create visualization")
-    print("  You can now open these files in QGIS to visualize!")
+    print("Next step: Generate web tiles for browser visualization")
+    print("  Run: See tickets/21_production_web_tiles.md")
 
     if validation_passed:
         print("\n" + "="*60)

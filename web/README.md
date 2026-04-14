@@ -1,10 +1,42 @@
 # Redwood Habitat Suitability Web Visualization
 
-## Quick Start
+## Quick Start - View Interactive Map
 
-### Option 1: View in QGIS (Recommended for Prototype)
+### Web Browser (Recommended - Full Visualization) ⭐
 
-The fastest way to visualize the results:
+View the suitability layer as an interactive web map with tiles:
+
+```bash
+# IMPORTANT: Run server from PROJECT ROOT, not from web/ directory
+cd /home/adrian/redwoods
+python3 -m http.server 8000
+```
+
+Then open in your browser:
+```
+http://localhost:8000/web/
+# or
+http://0.0.0.0:8000/web/
+```
+
+**⚠️ Critical:** The URL must end with `/web/` (not just the root `/`)
+
+**What you'll see:**
+- ✅ Green overlay showing suitable redwood habitat (60.6% of Bay Area)
+- ✅ 4 ground truth validation points (red markers)
+- ✅ Layer toggle control (top-left)
+- ✅ Interactive pan/zoom (zoom levels 8-14)
+- ⚠️ Warning about v0 nighttime-only fog limitation
+
+**Technical details:**
+- Uses 4,125 pre-generated PNG tiles (1.9 MB total)
+- Leaflet.js for map rendering
+- Tiles served from `../tiles/redwood_suitability/`
+- Server must run from project root for relative paths to work
+
+### Alternative: View in QGIS
+
+For detailed analysis and layer inspection:
 
 ```bash
 # Install QGIS if not already installed
@@ -27,51 +59,39 @@ Then in QGIS:
    - Geometry: Point coordinates, X=longitude, Y=latitude
    - Style: Red circles
 
-3. **Add context layers (optional):**
+3. **Add component layers (optional):**
    - `outputs/bay_area_rainfall_total.tif` - Continuous rainfall values
-   - `outputs/bay_area_fog_days_estimate.tif` - Fog days estimate
+   - `outputs/bay_area_fog_days_goes16.tif` - GOES-16 nighttime fog frequency
    - Add OpenStreetMap basemap via QuickMapServices plugin
 
-### Option 2: Web Browser (Basic)
+## Outputs (in `../outputs/`)
 
-View ground truth points on an interactive map:
-
-```bash
-# From the redwoods directory
-cd web
-python3 -m http.server 8000
-```
-
-Then open in your browser:
-```
-http://localhost:8000/
-```
-
-**Note:** The current web version shows ground truth points and the study area boundary, but does not yet render the GeoTIFF raster. Viewing rasters in the browser requires converting to tiles (see "Future Enhancements" below).
-
-## Files
-
-### Outputs (in `../outputs/`)
-
-**Final suitability layer:**
+### Final suitability layer:
 - `bay_area_redwood_suitable.tif` - Binary raster (1=suitable, 0=not suitable)
+- `bay_area_redwood_suitable_cog.tif` - Cloud Optimized GeoTIFF for tile generation
 
-**Component layers:**
+### Component layers:
 - `bay_area_rainfall_total.tif` - Wet season rainfall (continuous, inches)
 - `bay_area_rainfall_20in.tif` - Rainfall threshold (binary, ≥20")
-- `bay_area_fog_days_estimate.tif` - Fog days estimate (continuous, MOCK DATA)
-- `bay_area_fog_80days.tif` - Fog threshold (binary, ≥80 days)
+- `bay_area_fog_days_goes16.tif` - Nighttime fog days (continuous, GOES-16 satellite)
+- `bay_area_fog_80days_goes16.tif` - Fog threshold (binary, ≥80 days)
 
-**Metadata:**
-- `bay_area_bbox.json` - Bounding box for study area
+### Web tiles:
+- `../tiles/redwood_suitability/{z}/{x}/{y}.png` - 4,125 tiles, zoom 8-14
 
-### Data Sources
+**⚠️ Important:** The `tiles/` directory is excluded from git (see `.gitignore`). Regenerate with:
+```bash
+uv run python scripts/13_generate_web_tiles.py
+```
+
+## Data Sources
 
 **Ground truth:**
 - `../data/redwood_ground_truth_points.csv` - 4 known redwood locations
 
 **Input data:**
-- `../data/prism_ppt_us_30s_*` - PRISM monthly precipitation normals
+- `../data/prism_ppt_us_30s_*` - PRISM monthly precipitation normals (1991-2020)
+- `../data/goes16_multi_week/*.nc` - GOES-16 satellite data (May-Sep 2024, nighttime)
 
 ## Validation Results
 
@@ -85,65 +105,143 @@ http://localhost:8000/
 ## Summary Statistics
 
 **Suitable habitat area:**
-- 5,397 pixels (44.6% of study area)
+- 7,334 pixels (60.6% of study area)
+- Resolution: 800m
 
 **Suitable habitat characteristics:**
-- Rainfall: 20.0 - 53.0 inches (mean: 27.1")
-- Fog days: 80.0 - 140.0 days (mean: 111.9 days)
+- Rainfall: 20.0 - 56.8 inches (mean: 28.0")
+- Nighttime fog: 124.9 - 184.0 days (mean: 169.8 days)
+
+**Fog detection:**
+- Method: GOES-16 BTD (Brightness Temperature Difference)
+- Channels: Ch13 (10.3 µm) - Ch7 (3.9 µm)
+- Time window: Nighttime only (06-12 UTC = 11pm-5am PST)
+- Sample period: 4 weeks across dry season (May, June, August, September 2024)
+- Total observations: 392 nighttime samples
 
 ## Important Notes
 
-### ⚠️ Prototype Limitations
+### ⚠️ v0 Limitations
 
-1. **Mock fog data:** The fog layer is based on a simple coastal proximity model, NOT real satellite data. This proves the pipeline works but is not scientifically accurate.
+1. **Nighttime fog only:**
+   - Current fog detection uses BTD which ONLY works at night
+   - Ch7 (3.9 µm) contains solar reflection during daytime, invalidating BTD
+   - This captures nighttime/pre-dawn fog (11pm-5am PST)
+   - **Missing:** Daytime fog, especially "fog past noon" from original heuristic
+   - **Future enhancement:** See `tickets/22_daytime_fog_detection.md`
 
-2. **Geographic scope:** Bay Area only (~37.1-38.2°N, ~122.9-121.9°W)
+2. **Limited temporal coverage:**
+   - 4 weeks sampled from 2024 dry season
+   - Extrapolated to full 184-day dry season
+   - Production would use multi-year climatology (5-10 years)
 
-3. **Resolution:** 800m (PRISM native resolution)
+3. **Geographic scope:** Bay Area only (~37.1-38.2°N, ~122.9-121.9°W)
 
-4. **Temporal:** Single climatological period (PRISM 1991-2020 normals)
+4. **Resolution:** 800m (PRISM native resolution)
 
-### For Production Use
+### Data Quality
 
-To create a scientifically rigorous version:
+✓ **GOES-16 satellite data (real)** - Not mock/estimated
+✓ **PRISM climate normals (30-year)** - Authoritative rainfall data
+✓ **Proper reprojection** - GOES fixed grid → WGS84 → Web Mercator
+✓ **Scientifically validated** - Published BTD fog detection method
+⚠️ **Nighttime-only limitation** - See Ticket #22 for daytime enhancement
 
-1. **Replace mock fog with GOES-16 data:**
-   - Download Ch7 + Ch13 for multiple dry seasons (May-Oct)
-   - Calculate BTD (Brightness Temperature Difference)
-   - Count actual afternoon fog days
-   - Average across 5-10 years for climatology
+## Regenerating Web Tiles
 
-2. **Expand geographic scope:**
-   - Full California coast (north of San Simeon to Oregon border)
-   - Requires processing larger PRISM and GOES-16 datasets
+If you update the suitability layer and need to regenerate tiles:
 
-3. **Add refinements:**
-   - Topography (elevation, slope, aspect)
-   - Soil characteristics
-   - Distance to streams/watersheds
-   - Urban mask (current development)
+```bash
+# From project root
+uv run python scripts/13_generate_web_tiles.py
+```
 
-4. **Generate web tiles:**
-   - Convert GeoTIFFs to tile pyramid (zoom levels 8-16)
-   - Use gdal2tiles or rio-tiler
-   - Host tiles for web map
+This will:
+1. Convert `outputs/bay_area_redwood_suitable.tif` to COG (if needed)
+2. Generate 4,125 PNG tiles for zoom levels 8-14
+3. Save to `tiles/redwood_suitability/`
+
+**Note:** Tiles are not committed to git (excluded in `.gitignore`)
+
+## Scripts
+
+All processing scripts are in `../scripts/`:
+
+**Data download and processing:**
+- `01_process_bay_area_rainfall.py` - Process PRISM wet season rainfall
+- `09_download_week_goes16.py` - Download 1 week GOES-16 sample
+- `12_download_multi_week_goes16.py` - Download 4 weeks GOES-16 (nighttime)
+
+**Fog detection:**
+- `11_create_real_fog_layer.py` - Process GOES-16 nighttime fog (BTD method)
+
+**Suitability calculation:**
+- `04_combine_suitability.py` - Combine criteria into final layer
+
+**Web visualization:**
+- `13_generate_web_tiles.py` - Generate web tiles from suitability raster
+
+Run with:
+```bash
+uv run python scripts/<script_name>.py
+```
+
+## Troubleshooting
+
+### Tiles not loading (404 errors)
+
+**Problem:** You started the HTTP server from the `web/` directory
+```bash
+cd web  # ← WRONG
+python3 -m http.server 8000
+```
+
+**Solution:** Start from project root
+```bash
+cd /home/adrian/redwoods  # ← CORRECT
+python3 -m http.server 8000
+# Then navigate to http://localhost:8000/web/
+```
+
+The tiles are at `tiles/redwood_suitability/`, and the HTML uses relative path `../tiles/`. This only works when the server root is the project root.
+
+### Map shows only points, no green overlay
+
+1. Check that tiles exist:
+   ```bash
+   ls tiles/redwood_suitability/9/
+   ```
+
+2. If missing, regenerate:
+   ```bash
+   uv run python scripts/13_generate_web_tiles.py
+   ```
+
+3. Check browser console for tile loading errors
+
+4. Verify you're at `/web/` URL (not just `/`)
 
 ## Future Enhancements
 
-### Near-term (Complete prototype):
-- [ ] Download real GOES-16 sample data
-- [ ] Implement BTD fog detection
-- [ ] Generate tile pyramid for web display
-- [ ] Add layer toggle controls
-- [ ] Click to query values at location
+### Completed ✓
+- [x] Download real GOES-16 satellite data
+- [x] Implement BTD fog detection
+- [x] Generate tile pyramid for web display
+- [x] Add layer toggle controls
+- [x] Interactive web visualization
+
+### Near-term:
+- [ ] Daytime fog detection using visible channels (Ticket #22)
+- [ ] Multi-year GOES-16 climatology
+- [ ] Click to query rainfall/fog values at location
+- [ ] Export suitable areas as GeoJSON
 
 ### Long-term (Production):
-- [ ] Multi-year GOES-16 climatology
 - [ ] Full California coastal extent
-- [ ] Add topographic refinements
+- [ ] Add topographic refinements (elevation, slope, aspect)
 - [ ] Validate against historical redwood maps
-- [ ] Implement Layer 1 (current redwood detection)
-- [ ] Host on public server
+- [ ] Implement Layer 1 (current redwood distribution detection)
+- [ ] Host on public server with CDN
 
 ## References
 
@@ -154,19 +252,10 @@ To create a scientifically rigorous version:
 **Data sources:**
 - PRISM Climate Group: https://prism.oregonstate.edu/
 - NOAA GOES-16: https://registry.opendata.aws/noaa-goes/
+- GOES-16 BTD Fog Detection: NOAA/CIMSS algorithm documentation
 - Ground truth: User-provided redwood locations
 
-## Scripts
-
-All processing scripts are in `../scripts/`:
-- `01_process_bay_area_rainfall.py` - Process PRISM wet season rainfall
-- `02_download_goes16_sample_days.py` - Download GOES-16 fog data
-- `03_create_mock_fog_layer.py` - Create mock fog layer (prototype only)
-- `04_combine_suitability.py` - Combine criteria into final layer
-
-Run with:
-```bash
-uv run python scripts/<script_name>.py
-```
-
-See `../tickets/00_end_to_end_prototype.md` for detailed documentation.
+**Documentation:**
+- See `../tickets/21_production_web_tiles.md` for web tile implementation details
+- See `../tickets/22_daytime_fog_detection.md` for future daytime fog enhancement
+- See `../GOES16_REAL_FOG_RESULTS.md` for GOES-16 validation results

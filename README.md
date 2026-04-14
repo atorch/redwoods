@@ -1,6 +1,22 @@
 # redwoods
 A map of coastal redwoods
 
+## Quick Start: Viewing Results
+
+**QGIS (recommended):**
+```bash
+qgis outputs/bay_area_redwood_suitable.tif
+```
+
+**Web browser (interactive tiles):**
+```bash
+# IMPORTANT: Run from project root, not from web/ directory
+python3 -m http.server 8000
+# Open http://localhost:8000/web/ (note the /web/ path!)
+```
+
+See `web/README.md` for detailed visualization instructions and troubleshooting.
+
 ## Project Goal
 Create an interactive web-based map showing:
 1. **Layer 1**: Where coastal redwoods are growing today (current distribution)
@@ -45,15 +61,20 @@ uv run --with rasterio --with pandas --with shapely python scripts/<script_name>
 **Data verification:**
 - `scripts/check_prism_precipitation.py` - Sanity check PRISM precipitation data at Oakland, CA
 
-**Prototype pipeline (Ticket #00):**
-- `scripts/01_process_bay_area_rainfall.py` - Process PRISM wet season rainfall, create 20" threshold layer
-- `scripts/02_download_goes16_sample_days.py` - Download sample GOES-16 fog data (July 2024)
-- `scripts/03_process_fog_btd.py` - Process GOES-16 BTD and count fog days (coming soon)
-- `scripts/04_combine_suitability.py` - Combine rainfall + fog into final suitability layer (coming soon)
-- `scripts/05_generate_web_viz.py` - Generate web visualization (coming soon)
+**Prototype pipeline (Ticket #00) - COMPLETED:**
+- `scripts/01_process_bay_area_rainfall.py` - Process PRISM wet season rainfall, create 20" threshold layer ✓
+- `scripts/03_create_mock_fog_layer.py` - Create mock fog layer based on coastal proximity ✓
+- `scripts/04_combine_suitability.py` - Combine rainfall + fog into final suitability layer ✓
+
+**Real GOES-16 fog processing (in progress):**
+- `scripts/05_download_process_goes16_sample.py` - Download 3-day GOES-16 sample (minimal disk usage)
+- `scripts/06_process_goes16_btd.py` - Calculate BTD and detect fog from satellite data
+- `scripts/07_test_btd_with_sample.py` - Test BTD with existing sample file
+- Note: Requires AWS CLI or goes2go library for S3 access (see GOES16_PROGRESS.md)
 
 **GOES-16 utilities:**
 - `scripts/download_goes16_fog_data.py` - Example GOES-16 download script
+- `scripts/02_download_goes16_sample_days.py` - Alternative download approach
 
 ## Data Sources
 

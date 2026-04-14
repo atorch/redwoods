@@ -221,4 +221,9 @@ data/**/*dbf
 data/**/*shx
 data/**/*cpg
 
+data/**/*nc
+
 data/*~
+
+# Web tiles (regenerate with scripts/13_generate_web_tiles.py)
+tiles/
