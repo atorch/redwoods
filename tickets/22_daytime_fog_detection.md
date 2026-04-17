@@ -1,8 +1,13 @@
 # Daytime Fog Detection for Redwood Habitat Suitability
 
+**PRIORITY: HIGH** - Critical for validating original heuristic
+
+**STATUS UPDATE (2026-04-13):**
+Current v0 implementation shows 99.8% of pixels meet fog criterion, making it essentially ineffective as a discriminating factor. Investigation (see `FOG_THRESHOLD_INVESTIGATION.md`) suggests this may be due to nighttime-only sampling capturing pre-dawn marine layer (which is nearly universal along California coast) rather than the ecologically-critical "fog past noon" persistence specified in the original heuristic.
+
 ## Objective
 
-Implement daytime fog detection using GOES-16 visible channel reflectance to complement the current nighttime BTD-based fog detection, enabling full 24-hour fog frequency analysis.
+Implement daytime fog detection using GOES-16 visible channel reflectance to complement the current nighttime BTD-based fog detection, enabling full 24-hour fog frequency analysis and proper validation of the "fog past noon 80 days/season" criterion.
 
 ## Background
 

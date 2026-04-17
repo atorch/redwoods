@@ -28,12 +28,14 @@ from rio_tiler.io import Reader
 from rio_tiler.models import ImageData
 from PIL import Image
 import mercantile
+import json
 
 
 # Configuration
 INPUT_FILE = Path("outputs/bay_area_redwood_suitable.tif")
 COG_FILE = Path("outputs/bay_area_redwood_suitable_cog.tif")
 TILES_DIR = Path("tiles/redwood_suitability")
+BBOX_FILE = Path("outputs/bay_area_bbox.json")
 
 # Zoom levels for Bay Area (regional to neighborhood scale)
 MIN_ZOOM = 8
@@ -117,10 +119,15 @@ def convert_to_cog():
 
 
 def get_tile_bounds(zoom_level):
-    """Calculate tile bounds for Bay Area at given zoom level."""
-    # Bay Area bounding box (WGS84)
-    west, south = -122.8755, 37.1106
-    east, north = -121.8561, 38.1959
+    """Calculate tile bounds for study area at given zoom level."""
+    # Load bounding box from file
+    with open(BBOX_FILE, 'r') as f:
+        bbox = json.load(f)
+
+    west = bbox['min_lon']
+    south = bbox['min_lat']
+    east = bbox['max_lon']
+    north = bbox['max_lat']
 
     # Get tiles covering the bounding box
     tiles = list(mercantile.tiles(west, south, east, north, zoom_level))

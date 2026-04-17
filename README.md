@@ -1,5 +1,5 @@
 # redwoods
-A map of coastal redwoods
+A map of coastal redwoods ([coast redwood ecology and distribution](https://www.savetheredwoods.org/redwoods/coast-redwoods/))
 
 ## Quick Start: Viewing Results
 

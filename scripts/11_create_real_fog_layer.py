@@ -38,10 +38,21 @@ from pyproj import Transformer
 from scipy.interpolate import griddata
 
 # Configuration
-# Use multi-week data if available, otherwise fall back to single week
-DATA_DIR_MULTI = Path("data/goes16_multi_week")
+# Use multi-year data if available, otherwise fall back to multi-week or single week
+DATA_DIR_MULTIYEAR = Path("data/goes16_multiyear")
+DATA_DIR_MULTIWEEK = Path("data/goes16_multi_week")
 DATA_DIR_WEEK = Path("data/goes16_week")
-DATA_DIR = DATA_DIR_MULTI if DATA_DIR_MULTI.exists() else DATA_DIR_WEEK
+
+# Priority: multiyear > multiweek > week
+if DATA_DIR_MULTIYEAR.exists():
+    DATA_DIR = DATA_DIR_MULTIYEAR
+elif DATA_DIR_MULTIWEEK.exists():
+    DATA_DIR = DATA_DIR_MULTIWEEK
+else:
+    DATA_DIR = DATA_DIR_WEEK
+
+# For multi-year, also load 2024 data from multiweek directory
+COMBINE_MULTIYEAR = DATA_DIR_MULTIYEAR.exists() and DATA_DIR_MULTIWEEK.exists()
 
 OUTPUT_DIR = Path("outputs")
 MANIFEST_FILE = DATA_DIR / "download_manifest.json"
@@ -49,7 +60,12 @@ BBOX_FILE = OUTPUT_DIR / "bay_area_bbox.json"
 REFERENCE_FILE = OUTPUT_DIR / "bay_area_rainfall_20in.tif"
 
 # BTD threshold for fog (Kelvin)
-FOG_BTD_THRESHOLD = 0.0
+# Empirically calibrated for California coastal marine layer
+# Literature shows thresholds vary -2.0 K to 7.5 K by fog type/region
+# 1.0 K selected via ground truth validation (2026-04-15)
+# Testing to resolve Muir Woods validation issue
+# See LITERATURE_REVIEW_FOG_THRESHOLDS.md for justification
+FOG_BTD_THRESHOLD = 1.0
 
 # Dry season: May 1 - Oct 31 = 184 days
 DRY_SEASON_DAYS = 184
@@ -191,8 +207,18 @@ def process_goes_pair_efficient(ch7_info, ch13_info, bbox, goes_lons, goes_lats)
     Returns:
         Fog mask subset to bounding box, with corresponding lon/lat
     """
-    ch7_path = DATA_DIR / ch7_info['filename']
-    ch13_path = DATA_DIR / ch13_info['filename']
+    # Find files - check both directories if combining multiyear
+    if COMBINE_MULTIYEAR:
+        ch7_path_multiyear = DATA_DIR / ch7_info['filename']
+        ch7_path_2024 = DATA_DIR_MULTIWEEK / ch7_info['filename']
+        ch7_path = ch7_path_multiyear if ch7_path_multiyear.exists() else ch7_path_2024
+
+        ch13_path_multiyear = DATA_DIR / ch13_info['filename']
+        ch13_path_2024 = DATA_DIR_MULTIWEEK / ch13_info['filename']
+        ch13_path = ch13_path_multiyear if ch13_path_multiyear.exists() else ch13_path_2024
+    else:
+        ch7_path = DATA_DIR / ch7_info['filename']
+        ch13_path = DATA_DIR / ch13_info['filename']
 
     # Load Ch7
     ds7 = nc.Dataset(ch7_path)
@@ -310,7 +336,14 @@ def aggregate_fog_to_grid_efficient(pairs, bbox, output_grid):
     # Pre-compute GOES lon/lat grid (same for all images)
     print("Computing GOES-16 coordinate grid...")
     sample_pair = pairs[0]
-    ch7_path = DATA_DIR / sample_pair[0]['filename']
+
+    # Find sample file - check both directories if combining multiyear
+    if COMBINE_MULTIYEAR:
+        ch7_path_multiyear = DATA_DIR / sample_pair[0]['filename']
+        ch7_path_2024 = DATA_DIR_MULTIWEEK / sample_pair[0]['filename']
+        ch7_path = ch7_path_multiyear if ch7_path_multiyear.exists() else ch7_path_2024
+    else:
+        ch7_path = DATA_DIR / sample_pair[0]['filename']
 
     ds = nc.Dataset(ch7_path)
     x_rad = ds.variables['x'][:]
@@ -492,9 +525,21 @@ def main():
     print(f"Study area: {bbox['min_lat']:.4f}°N to {bbox['max_lat']:.4f}°N, "
           f"{bbox['min_lon']:.4f}°E to {bbox['max_lon']:.4f}°E")
 
-    # Handle both single-week and multi-week manifest formats
-    if 'weeks' in manifest:
-        # Multi-week format
+    # Handle different manifest formats
+    if COMBINE_MULTIYEAR:
+        # When combining multiyear, display info will come from file loading section
+        print("Using multi-year data (2020-2024)")
+        print()
+    elif 'years' in manifest:
+        # Multi-year format
+        total_days = sum(sum(w['num_days'] for w in year['weeks']) for year in manifest['years'])
+        total_weeks = sum(len(year['weeks']) for year in manifest['years'])
+        print(f"Sample period: {total_days} days across {len(manifest['years'])} years, {total_weeks} weeks")
+        for year_data in manifest['years']:
+            days_this_year = sum(w['num_days'] for w in year_data['weeks'])
+            print(f"  - {year_data['year']}: {days_this_year} days across {len(year_data['weeks'])} weeks")
+    elif 'weeks' in manifest:
+        # Multi-week format (single year)
         total_days = sum(w['num_days'] for w in manifest['weeks'])
         print(f"Sample period: {total_days} days across {len(manifest['weeks'])} weeks")
         for week in manifest['weeks']:
@@ -504,14 +549,26 @@ def main():
         total_days = manifest['num_days']
         print(f"Sample period: {total_days} days")
 
-    print(f"Total files: {manifest['total_files']}")
+    if not COMBINE_MULTIYEAR and 'total_files' in manifest:
+        print(f"Total files: {manifest['total_files']}")
     print()
 
     # Match Ch7/Ch13 pairs
     print("Matching Ch7/Ch13 pairs...")
 
     # Get actual files from directory (handles both manifest formats)
-    all_nc_files = [f.name for f in DATA_DIR.glob("*.nc")]
+    # If using multi-year data, combine with 2024 data from multiweek directory
+    if COMBINE_MULTIYEAR:
+        print(f"  Loading from {DATA_DIR} (2020-2023)")
+        print(f"  Loading from {DATA_DIR_MULTIWEEK} (2024)")
+        files_multiyear = [f.name for f in DATA_DIR.glob("*.nc")]
+        files_2024 = [f.name for f in DATA_DIR_MULTIWEEK.glob("*.nc")]
+        all_nc_files = files_multiyear + files_2024
+        print(f"  Total .nc files: {len(all_nc_files)} ({len(files_multiyear)} + {len(files_2024)})")
+    else:
+        all_nc_files = [f.name for f in DATA_DIR.glob("*.nc")]
+        print(f"  Total .nc files: {len(all_nc_files)}")
+
     pairs = match_channel_pairs(all_nc_files)
     print(f"  Found {len(pairs)} matched pairs")
     print()
@@ -529,10 +586,31 @@ def main():
     fog_days_count, sample_count = aggregate_fog_to_grid_efficient(pairs, bbox, output_grid)
 
     # Extrapolate to dry season
-    if 'weeks' in manifest:
-        total_sample_days = sum(w['num_days'] for w in manifest['weeks'])
+    if COMBINE_MULTIYEAR:
+        # Load both manifests to get total sample days
+        manifest_multiyear_file = DATA_DIR_MULTIYEAR / "download_manifest.json"
+        manifest_2024_file = DATA_DIR_MULTIWEEK / "download_manifest.json"
+
+        with open(manifest_multiyear_file) as f:
+            manifest_multiyear = json.load(f)
+        with open(manifest_2024_file) as f:
+            manifest_2024 = json.load(f)
+
+        # Calculate total sample days from both sources
+        days_multiyear = sum(sum(w['num_days'] for w in year['weeks']) for year in manifest_multiyear['years'])
+        days_2024 = sum(w['num_days'] for w in manifest_2024['weeks'])
+        total_sample_days = days_multiyear + days_2024
+
+        print(f"Multi-year climatology:")
+        print(f"  2020-2023: {days_multiyear} sample days")
+        print(f"  2024: {days_2024} sample days")
+        print(f"  Total: {total_sample_days} sample days")
+        print()
     else:
-        total_sample_days = manifest['num_days']
+        if 'weeks' in manifest:
+            total_sample_days = sum(w['num_days'] for w in manifest['weeks'])
+        else:
+            total_sample_days = manifest['num_days']
 
     print(f"Extrapolating from {total_sample_days} sample days to {DRY_SEASON_DAYS} dry season days...")
     fog_days_grid = extrapolate_to_dry_season(fog_days_count, total_sample_days)
