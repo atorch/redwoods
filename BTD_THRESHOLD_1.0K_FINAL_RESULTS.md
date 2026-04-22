@@ -202,7 +202,6 @@ The fog layer with 1.0 K threshold shows expected patterns:
 
 **Documentation:**
 - `LITERATURE_REVIEW_FOG_THRESHOLDS.md` - Research on BTD thresholds
-- `MULTIYEAR_RESULTS.md` - Analysis of 1.5 K results
 - `BTD_THRESHOLD_1.0K_FINAL_RESULTS.md` - This document
 
 ## Conclusion

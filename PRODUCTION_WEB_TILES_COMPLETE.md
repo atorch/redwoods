@@ -126,7 +126,6 @@ http://localhost:8000/web/
 
 ### Documentation
 - `LITERATURE_REVIEW_FOG_THRESHOLDS.md` - BTD threshold research
-- `MULTIYEAR_RESULTS.md` - Multi-year processing analysis
 - `BTD_THRESHOLD_1.0K_FINAL_RESULTS.md` - Final threshold validation
 - `PRODUCTION_WEB_TILES_COMPLETE.md` - This document
 

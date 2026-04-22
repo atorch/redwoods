@@ -17,8 +17,6 @@ python3 -m http.server 8000
 # Open http://localhost:8000/web/ (note the /web/ path!)
 ```
 
-See `web/README.md` for detailed visualization instructions and troubleshooting.
-
 ## Project Goal
 Create an interactive web-based map showing:
 1. **Layer 1**: Where coastal redwoods are growing today (current distribution)
@@ -72,7 +70,7 @@ uv run --with rasterio --with pandas --with shapely python scripts/<script_name>
 - `scripts/05_download_process_goes16_sample.py` - Download 3-day GOES-16 sample (minimal disk usage)
 - `scripts/06_process_goes16_btd.py` - Calculate BTD and detect fog from satellite data
 - `scripts/07_test_btd_with_sample.py` - Test BTD with existing sample file
-- Note: Requires AWS CLI or goes2go library for S3 access (see GOES16_PROGRESS.md)
+- Note: Requires AWS CLI or goes2go library for S3 access
 
 **GOES-16 utilities:**
 - `scripts/download_goes16_fog_data.py` - Example GOES-16 download script

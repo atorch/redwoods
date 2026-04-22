@@ -313,7 +313,6 @@ def main():
     print("TROUBLESHOOTING:")
     print("   - 404 errors? → Server must run from project root, not web/")
     print("   - No tiles? → Run this script again to regenerate")
-    print("   - See web/README.md for detailed instructions")
     print()
     print(f"Tiles location: {TILES_DIR.absolute()}")
     print(f"Tile count: {calculate_total_tiles()} tiles")

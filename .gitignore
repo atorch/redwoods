@@ -227,3 +227,5 @@ data/*~
 
 # Web tiles (regenerate with scripts/13_generate_web_tiles.py)
 tiles/
+
+data/goes16_multiyear/*

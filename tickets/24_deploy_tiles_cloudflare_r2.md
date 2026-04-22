@@ -359,7 +359,7 @@ If Cloudflare R2 proves too complex or has issues, fall back to GitHub Pages:
 
 ## Documentation Updates
 
-- [ ] Update `web/README.md` with R2 URL
+- [ ] Document R2 URL in `CLAUDE.md`
 - [ ] Document R2 bucket name and public URL
 - [ ] Add instructions for regenerating/uploading tiles if data updates
 - [ ] Update main README with production URL and tile hosting details

@@ -127,7 +127,7 @@ Consider upgrading to Mapbox GL JS only if you want:
 - [x] Color scheme: Green (rgba(34, 139, 34, 0.8)) for suitable areas
 - [x] Info panel: GOES-16 validation status, data sources
 - [x] Mobile responsive design
-- [x] Update `web/README.md` with viewing instructions
+- [x] Document viewing instructions in `CLAUDE.md`
 - [x] Document tile regeneration process
 - [x] Create script: `scripts/13_generate_web_tiles.py`
 - [x] Test in multiple browsers

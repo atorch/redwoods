@@ -410,7 +410,7 @@ README.md               # Add "View live at redwoods.earth" badge
 
 - [ ] Add production URL to main README.md
 - [ ] Document tile regeneration → redeployment workflow
-- [ ] Add deployment instructions to `web/README.md`
+- [ ] Add deployment instructions to `CLAUDE.md`
 - [ ] Document domain renewal process (set calendar reminder)
 - [ ] Add troubleshooting guide for common issues
 
