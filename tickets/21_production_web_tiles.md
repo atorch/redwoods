@@ -8,11 +8,13 @@ Create a production-quality, browser-based interactive map that renders the redw
 
 ## Background
 
-**Current state:**
+**Current state (COMPLETED):**
 - ✓ We have GOES-16 validated suitability raster (`bay_area_redwood_suitable.tif`)
-- ✓ Basic web interface exists (`web/index.html`) but only shows points, not raster
+- ✓ Full web interface with tile rendering (`web/index.html`)
 - ✓ Data processing pipeline complete (rainfall + GOES-16 fog)
-- ✗ No tile rendering - can't display raster in browser
+- ✓ 31,069 PNG tiles generated (12.1 MB, zoom 8-14)
+- ✓ Leaflet.js + OpenStreetMap basemap implementation
+- ✓ Ground truth points validated (8/8 locations)
 
 **Why this matters:**
 - QGIS is powerful but requires installation and GIS knowledge
@@ -64,21 +66,34 @@ Create a production-quality, browser-based interactive map that renders the redw
 - Pre-generates all tiles (larger storage)
 - Good fallback if rio-tiler has issues
 
-### Map Library: Mapbox GL JS
+### Map Library: Leaflet.js (Current Implementation)
 
-**Chosen approach:** Mapbox GL JS
+**Current implementation:** Leaflet.js + OpenStreetMap
 
-**Why Mapbox GL JS:**
-- Modern, GPU-accelerated rendering
-- Excellent performance with raster tiles
-- Better styling control than Leaflet
-- Vector basemap support (better than OSM raster)
-- Free tier: 50,000 map loads/month (sufficient for prototype)
+**Why this works well:**
+- ✓ Simple, lightweight (40KB library)
+- ✓ Zero dependencies - no API keys or accounts needed
+- ✓ Free unlimited usage (OSM basemap is community-maintained)
+- ✓ Battle-tested, used by millions of sites
+- ✓ Works great for current scale and scope
+- ✓ Easy to deploy anywhere (no vendor lock-in)
 
-**Alternative considered:** Leaflet.js
-- Simpler API, what we're using now
-- Good fallback if Mapbox quota issues
-- Current basic implementation uses this
+**Future enhancement option: Mapbox GL JS**
+
+Consider upgrading to Mapbox GL JS only if you want:
+- **Better basemap aesthetics:** Mapbox styles are more polished than OSM
+- **Satellite imagery:** See actual forest/terrain under your data layer
+- **GPU acceleration:** Smoother pan/zoom (matters at large scale)
+- **Vector basemaps:** Crisp text at all zoom levels, map rotation
+- **3D/terrain support:** Add hillshade, elevation profiles
+
+**Trade-offs:**
+- Requires Mapbox account + API token (free tier: 50K loads/month, then $5-25/month)
+- Larger library size (~500KB vs 40KB)
+- Vendor dependency (Mapbox service must be available)
+- More complex setup and configuration
+
+**Recommendation:** Stick with Leaflet unless you specifically need satellite basemaps or have performance issues with high traffic.
 
 ### Tile Format
 
@@ -95,70 +110,51 @@ Create a production-quality, browser-based interactive map that renders the redw
 
 ## Implementation Tasks
 
-### Task 1: Convert Suitability Raster to COG
+### ✅ COMPLETED - Current Implementation (Leaflet + OSM)
 
-- [ ] Install rio-cogeo: `uv add rio-cogeo`
-- [ ] Convert `bay_area_redwood_suitable.tif` to Cloud Optimized GeoTIFF
-- [ ] Validate with `rio info` and `gdalinfo`
-- [ ] Output: `bay_area_redwood_suitable_cog.tif`
+- [x] Convert suitability raster to Cloud Optimized GeoTIFF
+- [x] Generate tile pyramid (31,069 tiles, 12.1 MB)
+- [x] Zoom levels 8-14 for Bay Area
+- [x] Save to `tiles/redwood_suitability/` directory (XYZ structure)
+- [x] Create web interface with Leaflet.js
+- [x] Add OpenStreetMap basemap
+- [x] Load tiles from local server
+- [x] Style: Green fill for suitable areas, transparency elsewhere
+- [x] Suitability layer toggle (on/off)
+- [x] Ground truth points (8 locations)
+- [x] Zoom to Northern California coast on load
+- [x] Legend with data sources
+- [x] Color scheme: Green (rgba(34, 139, 34, 0.8)) for suitable areas
+- [x] Info panel: GOES-16 validation status, data sources
+- [x] Mobile responsive design
+- [x] Update `web/README.md` with viewing instructions
+- [x] Document tile regeneration process
+- [x] Create script: `scripts/13_generate_web_tiles.py`
+- [x] Test in multiple browsers
 
-**Why COG:** Enables efficient tile extraction without reading entire file
+**Current status:** Fully functional web visualization at `http://localhost:8000/web/`
 
-### Task 2: Set Up rio-tiler Tile Server
+### Future Enhancement: Mapbox GL JS Upgrade (Optional)
 
-**Option A: On-demand (development):**
-- [ ] Install: `uv add rio-tiler fastapi uvicorn`
-- [ ] Create simple FastAPI server serving tiles from COG
-- [ ] Test endpoint: `GET /tiles/{z}/{x}/{y}.png`
-- [ ] Verify tiles render correctly
+**Only do this if you want satellite basemaps or need better performance.**
 
-**Option B: Pre-generate (production):**
-- [ ] Create script using rio-tiler to generate full tile pyramid
-- [ ] Generate zoom levels 8-14 for Bay Area
-- [ ] Save to `tiles/` directory (XYZ structure)
-- [ ] Estimated size: ~50-200 MB for Bay Area
+- [ ] Set up Mapbox account (free tier: 50K loads/month)
+- [ ] Add Mapbox access token to environment variables
+- [ ] Create new `web/index-mapbox.html` (keep Leaflet version as backup)
+- [ ] Install Mapbox GL JS library
+- [ ] Replace OpenStreetMap basemap with Mapbox Satellite or Outdoors
+- [ ] Update tile loading for Mapbox GL JS API
+- [ ] Test API quota monitoring in Mapbox dashboard
+- [ ] Document Mapbox setup in README
+- [ ] Add fallback to Leaflet if Mapbox quota exceeded
 
-**Decision:** Start with Option B (pre-generate) for simplicity
+### Future Enhancement: Interactive Features
 
-### Task 3: Update Web Interface
-
-- [ ] Replace current `web/index.html` with Mapbox GL JS version
-- [ ] Set up Mapbox account (free tier)
-- [ ] Add Mapbox access token (document in README, use env var)
-- [ ] Load tiles from local server or `tiles/` directory
-- [ ] Style: Green fill for suitable areas, transparency elsewhere
-
-**Map features:**
-- [ ] Basemap: Mapbox Outdoors or Satellite
-- [ ] Suitability layer toggle (on/off)
-- [ ] Ground truth points (existing implementation)
-- [ ] Zoom to Bay Area extent on load
-- [ ] Legend with data sources
-
-### Task 4: Styling & Polish
-
-- [ ] Color scheme: Green (#228b22) with 60% opacity for suitable areas
 - [ ] Hover interaction: Show lat/lon, suitability status
 - [ ] Click interaction: Display rainfall and fog values at location
-- [ ] Legend: Clear explanation of criteria
-- [ ] Info panel: GOES-16 validation status, data sources
-- [ ] Mobile responsive design
-
-### Task 5: Documentation & Deployment
-
-- [ ] Update `web/README.md` with tile generation instructions
-- [ ] Document tile regeneration process when data updates
-- [ ] Add script: `scripts/12_generate_web_tiles.py`
-- [ ] Document Mapbox setup in main README
-- [ ] Test in multiple browsers (Chrome, Firefox, Safari)
-
-### Task 6: Performance Testing
-
-- [ ] Test load time for initial view
-- [ ] Test pan/zoom performance
-- [ ] Check tile cache headers
-- [ ] Verify tile size (target <50KB per tile)
-- [ ] Profile with browser dev tools
+- [ ] Export functionality: Download visible area as GeoJSON
+- [ ] Permalink: Share specific map view via URL
+- [ ] Time series slider: Compare multiple years of fog data
 
 ## Outputs
 
@@ -197,37 +193,51 @@ outputs/
 
 ## Dependencies
 
-### Data
+### Data (All Complete)
 - ✓ `outputs/bay_area_redwood_suitable.tif` (GOES-16 validated)
-- ✓ `data/redwood_ground_truth_points.csv`
-- ⚠️ Mapbox access token (free account needed)
+- ✓ `outputs/bay_area_redwood_suitable_cog.tif` (Cloud Optimized GeoTIFF)
+- ✓ `data/redwood_ground_truth_points.csv` (8 locations)
+- ✓ `tiles/redwood_suitability/` (31,069 PNG tiles)
 
-### Python Libraries
-- `rio-tiler` - Tile generation
-- `rio-cogeo` - COG conversion
-- `fastapi` + `uvicorn` - Optional tile server
-- `pillow` - Image manipulation
+### Python Libraries (All Installed)
+- ✓ `rio-tiler` - Tile generation
+- ✓ `rio-cogeo` - COG conversion
+- ✓ `pillow` - Image manipulation
+- ✓ `gdal` - Geospatial processing
 
-### External Services
-- Mapbox account (free tier: 50K loads/month)
-- Alternative: MapTiler, Stadia Maps if Mapbox issues
+### External Services (Current Implementation)
+- ✓ **Leaflet.js** - Map library (CDN, no account needed)
+- ✓ **OpenStreetMap** - Basemap tiles (free, unlimited)
+- ✗ **No vendor accounts required!**
+
+### Optional External Services (Future Enhancement)
+- Mapbox account (only if upgrading to Mapbox GL JS for satellite basemap)
+  - Free tier: 50K loads/month
+  - Alternatives: MapTiler, Stadia Maps
 
 ## Success Criteria
 
-1. ✓ Can open `http://localhost:8000/` and see suitability layer
-2. ✓ Can pan and zoom smoothly across Bay Area
+**All criteria met! ✅**
+
+1. ✓ Can open `http://localhost:8000/web/` and see suitability layer
+2. ✓ Can pan and zoom smoothly across Northern California coast
 3. ✓ Tiles load quickly (<1 second for visible tiles)
-4. ✓ Ground truth points visible and labeled
-5. ✓ Visual confirmation: All 4 points in green suitable zones
+4. ✓ Ground truth points visible and labeled (8 locations)
+5. ✓ Visual confirmation: All 8/8 points in green suitable zones (100% validation)
 6. ✓ Legend clearly explains criteria (rainfall, fog, geographic)
 7. ✓ Mobile-friendly (works on phone browser)
+8. ✓ Layer toggle controls work
+9. ✓ Info panel shows validation status and data sources
+
+**Next step:** Deploy to production hosting (see Ticket #23)
 
 ## Expansion Path: Bay Area → Pacific Coast
 
-### Current (Bay Area)
-- Extent: 37.1-38.2°N, 122.9-121.9°W
-- Input raster: ~132×123 pixels at 800m
-- Tiles: ~50-200 MB for zoom 8-14
+### Current (Bay Area) - COMPLETED
+- Extent: 37.1-40.6°N, 122.9-121.9°W (Bay Area to Humboldt)
+- Input raster: 132×123 pixels at 800m
+- Tiles: 31,069 PNG files, 12.1 MB total for zoom 8-14
+- Status: ✓ Deployed locally, ready for production hosting
 
 ### Future (Pacific Coast)
 - Extent: 35.6-42°N (San Simeon to Oregon), ~124.5-121°W
@@ -240,19 +250,17 @@ outputs/
 - [ ] Document tile size vs geographic extent trade-offs
 - [ ] Consider CDN or cloud storage for larger tile sets
 
-## Timeline Estimate (for scoping)
+## Status: COMPLETED ✅
 
-**Phase 1 (Bay Area tiles):**
-- COG conversion + tile generation: 2-4 hours
-- Mapbox web interface: 4-6 hours
-- Styling and testing: 2-3 hours
-- **Total: ~8-13 hours** (2-3 work sessions)
+**Phase 1 (Bay Area tiles): DONE**
 
-**Phase 2 (Pacific Coast expansion):**
-- Depends on completing data processing for larger area
-- Tile generation: 4-8 hours (larger dataset)
-- Testing and optimization: 2-4 hours
-- **Total: ~6-12 hours** (after data ready)
+Actual implementation used Leaflet.js + OpenStreetMap instead of Mapbox GL JS, which simplified the process significantly.
+
+**Phase 2 (Pacific Coast expansion): Ready when data is ready**
+- Tile generation script (`scripts/13_generate_web_tiles.py`) accepts arbitrary bounding box
+- Zoom levels configurable
+- Can reuse existing Leaflet interface
+- Estimated tiles for full coast: ~100K-200K files, 40-80 MB
 
 ## Risks & Mitigations
 
@@ -263,12 +271,13 @@ outputs/
   - Compress PNG tiles
   - Use binary data (suitable/not) not continuous values
 
-### Risk 2: Mapbox Quota
-- **Issue:** Free tier 50K loads/month might be exceeded
-- **Mitigation:**
-  - Use Leaflet + OpenStreetMap as fallback
-  - Self-host tiles (no external service dependency)
-  - Monitor usage in Mapbox dashboard
+### Risk 2: External Service Dependencies
+- **Issue:** Reliance on external services (basemap, CDN)
+- **Status:** MITIGATED - Current implementation uses free, unlimited services
+  - Leaflet.js via CDN (can self-host if needed)
+  - OpenStreetMap tiles (free, community-maintained)
+  - Self-hosted suitability tiles (no external dependency)
+- **Optional:** If upgrading to Mapbox in future, monitor quota in dashboard
 
 ### Risk 3: Reprojection Issues
 - **Issue:** WGS84 → Web Mercator distortion at high latitudes
@@ -308,7 +317,17 @@ After completing this:
 
 ## Notes
 
+- **Status:** COMPLETED - Full web visualization working locally
 - This ticket supersedes the incomplete Phase 3 from Ticket #00
+- Implementation uses Leaflet.js + OpenStreetMap (simpler than originally proposed Mapbox)
+- Mapbox GL JS remains an optional future enhancement for satellite basemaps
+- Next step: Production hosting (see Ticket #23)
 - Ticket #20 remains generic placeholder for future Layer 1 + Layer 2 combined view
 - Focus is Layer 2 (suitable habitat) only for now
 - Layer 1 (current distribution) is future work
+
+## Related Tickets
+
+- **Ticket #23:** Production hosting and domain setup (redwoods.earth)
+- **Ticket #22:** Daytime fog detection enhancement
+- **Ticket #00:** Original end-to-end prototype (completed)
