@@ -12,10 +12,12 @@ qgis outputs/bay_area_redwood_suitable.tif
 
 **Web browser (interactive tiles):**
 ```bash
-# IMPORTANT: Run from project root, not from web/ directory
+cd web
 python3 -m http.server 8000
-# Open http://localhost:8000/web/ (note the /web/ path!)
+# Open http://localhost:8000/
 ```
+
+Tiles live under `web/tiles/` so `web/` is a self-contained static site — the same directory is uploaded to Cloudflare Pages for production.
 
 ## Project Goal
 Create an interactive web-based map showing:

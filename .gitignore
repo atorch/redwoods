@@ -225,7 +225,11 @@ data/**/*nc
 
 data/*~
 
-# Web tiles (regenerate with scripts/13_generate_web_tiles.py)
-tiles/
+# Web tiles (regenerate with scripts/13_generate_web_tiles.py).
+# /tiles/ scopes the ignore to the top-level legacy output dir only.
+# web/tiles/ is the current output dir — also ignored so the PNG blobs
+# stay out of git; Cloudflare Pages uploads them straight from disk.
+/tiles/
+web/tiles/
 
 data/goes16_multiyear/*

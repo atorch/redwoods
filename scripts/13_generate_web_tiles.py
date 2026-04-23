@@ -34,7 +34,9 @@ import json
 # Configuration
 INPUT_FILE = Path("outputs/bay_area_redwood_suitable.tif")
 COG_FILE = Path("outputs/bay_area_redwood_suitable_cog.tif")
-TILES_DIR = Path("tiles/redwood_suitability")
+# Tiles live under web/ so the whole web directory is a self-contained
+# deployable unit (Cloudflare Pages uploads web/ as-is).
+TILES_DIR = Path("web/tiles/redwood_suitability")
 BBOX_FILE = Path("outputs/bay_area_bbox.json")
 
 # Zoom levels for Bay Area (regional to neighborhood scale)
@@ -297,13 +299,12 @@ def main():
     print("VIEWING INSTRUCTIONS:")
     print("="*70)
     print()
-    print("1. Start HTTP server from PROJECT ROOT (not from web/ directory):")
-    print("   cd /home/adrian/redwoods")
+    print("1. Start HTTP server from the web/ directory:")
+    print("   cd /home/adrian/redwoods/web")
     print("   python3 -m http.server 8000")
     print()
     print("2. Open in browser:")
-    print("   http://localhost:8000/web/")
-    print("   (Note: URL must end with /web/ for tiles to load)")
+    print("   http://localhost:8000/")
     print()
     print("3. What you'll see:")
     print("   - Green overlay: Suitable habitat (60.6% of Bay Area)")
@@ -311,8 +312,8 @@ def main():
     print("   - Layer control: Toggle visibility in top-left")
     print()
     print("TROUBLESHOOTING:")
-    print("   - 404 errors? → Server must run from project root, not web/")
     print("   - No tiles? → Run this script again to regenerate")
+    print("   - Tiles now live at web/tiles/redwood_suitability/")
     print()
     print(f"Tiles location: {TILES_DIR.absolute()}")
     print(f"Tile count: {calculate_total_tiles()} tiles")

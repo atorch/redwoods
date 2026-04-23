@@ -1,5 +1,10 @@
 # Deploy Tiles to Cloudflare R2 for Production
 
+> **Status (2026-04-23): DEFERRED.**
+> We're bootstrapping prod with only the 12 zoom-8 tiles served directly from Cloudflare Pages (tiles live at `web/tiles/`, ship alongside `index.html`). That keeps the whole deploy to a single directory and well under Pages' 20k-file cap. The R2 plan below becomes the path when we ship higher zoom levels — z=9 adds ~30 tiles, z=13+ pushes us past the Pages cap.
+>
+> Everything below stays valid as the future-state plan; only the trigger has moved.
+
 ## Objective
 
 Upload the 31,069 redwood suitability tiles to Cloudflare R2 object storage and update the production site at redwoods.earth to load tiles from R2, completing the full production deployment.

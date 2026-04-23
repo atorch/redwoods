@@ -3,19 +3,22 @@
     Northern California Coastal Redwood Habitat Suitability - Interactive Map (v0)
 
     VIEWING INSTRUCTIONS:
-    1. Start HTTP server from PROJECT ROOT (not from web/ directory):
-       cd /home/adrian/redwoods
+    1. Start HTTP server from the web/ directory:
+       cd /home/adrian/redwoods/web
        python3 -m http.server 8000
 
     2. Open in browser:
-       http://localhost:8000/web/
-       (Note: URL must end with /web/ for tiles to load)
+       http://localhost:8000/
 
-    3. Tiles are loaded from ../tiles/redwood_suitability/
-       Relative path only works if server runs from project root
+    3. Tiles are loaded from ./tiles/redwood_suitability/
 
-    TROUBLESHOOTING:
-    - If tiles don't load (404 errors), check that server is running from project root
+    PRODUCTION BOOTSTRAP:
+    - For the first prod deploy we ship only the 12 zoom-8 tiles (whole
+      region, one zoom level). maxNativeZoom stretches them at higher zooms.
+    - AVAILABLE_TILES below is an allowlist; getTileUrl returns a transparent
+      PNG for any tile not in the set so we never 404 on missing tiles.
+    - When we add higher zooms we'll hit Cloudflare Pages' 20k-file cap; at
+      that point move tiles to R2 (see tickets/24_deploy_tiles_cloudflare_r2.md).
 
     v0 LIMITATION:
     - Uses nighttime-only fog detection (11pm-5am PST)
@@ -202,11 +205,37 @@
         maxZoom: 19
     }).addTo(map);
 
-    // Add suitability tile layer
-    // This will work when served via HTTP server (e.g., python -m http.server 8000)
-    const suitabilityLayer = L.tileLayer('../tiles/redwood_suitability/{z}/{x}/{y}.png', {
-        maxZoom: 14,
+    // Add suitability tile layer.
+    //
+    // Bootstrap state: we only ship the 12 zoom-8 tiles that cover the whole
+    // study bbox. maxNativeZoom: 8 tells Leaflet to keep requesting z=8 tiles
+    // and scale them at higher map zooms, so the overlay stays visible as the
+    // user zooms in (just pixelated — fine for a regional view).
+    //
+    // AVAILABLE_TILES is the hardcoded allowlist. The overridden getTileUrl
+    // returns a 1x1 transparent PNG for any "z/x/y" not in the set, so we
+    // never 404 on tiles we haven't uploaded. When more tiles are added,
+    // append to AVAILABLE_TILES (and raise maxNativeZoom as appropriate).
+    const AVAILABLE_TILES = new Set([
+        '8/39/96', '8/39/97', '8/39/98', '8/39/99',
+        '8/40/96', '8/40/97', '8/40/98', '8/40/99',
+        '8/41/96', '8/41/97', '8/41/98', '8/41/99'
+    ]);
+    const TRANSPARENT_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+    const FilteredTileLayer = L.TileLayer.extend({
+        getTileUrl: function(coords) {
+            const key = `${coords.z}/${coords.x}/${coords.y}`;
+            if (!AVAILABLE_TILES.has(key)) return TRANSPARENT_PNG;
+            return L.TileLayer.prototype.getTileUrl.call(this, coords);
+        }
+    });
+
+    const suitabilityLayer = new FilteredTileLayer('./tiles/redwood_suitability/{z}/{x}/{y}.png', {
         minZoom: 8,
+        maxZoom: 14,
+        minNativeZoom: 8,
+        maxNativeZoom: 8,
         opacity: 0.7,
         attribution: 'Suitability: PRISM + GOES-16 (nighttime fog)'
     }).addTo(map);
@@ -291,9 +320,9 @@
     console.log('🌲 Redwood Habitat Suitability Map (v0)');
     console.log('');
     console.log('To view tiles locally:');
-    console.log('1. cd /home/adrian/redwoods');
+    console.log('1. cd /home/adrian/redwoods/web');
     console.log('2. python -m http.server 8000');
-    console.log('3. Open http://localhost:8000/web/');
+    console.log('3. Open http://localhost:8000/');
     console.log('');
     console.log('Note: v0 uses nighttime-only fog detection');
     console.log('See Ticket #22 for daytime fog enhancement');
