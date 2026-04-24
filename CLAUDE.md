@@ -40,7 +40,7 @@ Tiles land in `web/tiles/redwood_suitability/` (git-ignored). Only a bootstrap s
 
 - `scripts/` — processing pipeline
 - `data/` — PRISM and GOES-16 inputs (ignored; regenerate via download scripts)
-- `outputs/` — derived rasters (`bay_area_redwood_suitable.tif` is the final layer)
+- `outputs/` — derived rasters (`study_area_redwood_suitable.tif` is the final layer)
 - `web/tiles/` — generated PNG tile pyramid (ignored); shipped to Cloudflare Pages
 - `tickets/` — design docs and task notes
 - `web/` — static site deployed to Cloudflare Pages (HTML + tiles)

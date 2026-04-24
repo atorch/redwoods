@@ -11,7 +11,7 @@ Compared to the [Wikipedia range map](https://upload.wikimedia.org/wikipedia/com
 
 **QGIS (recommended):**
 ```bash
-qgis outputs/bay_area_redwood_suitable.tif
+qgis outputs/study_area_redwood_suitable.tif
 ```
 
 **Web browser (interactive tiles):**
@@ -68,8 +68,7 @@ uv run --with rasterio --with pandas --with shapely python scripts/<script_name>
 - `scripts/check_prism_precipitation.py` - Sanity check PRISM precipitation data at Oakland, CA
 
 **Prototype pipeline (Ticket #00) - COMPLETED:**
-- `scripts/01_process_bay_area_rainfall.py` - Process PRISM wet season rainfall, create 20" threshold layer ✓
-- `scripts/03_create_mock_fog_layer.py` - Create mock fog layer based on coastal proximity ✓
+- `scripts/01_process_study_area_rainfall.py` - Process PRISM wet season rainfall, create 20" threshold layer ✓
 - `scripts/04_combine_suitability.py` - Combine rainfall + fog into final suitability layer ✓
 
 **Real GOES-16 fog processing (in progress):**

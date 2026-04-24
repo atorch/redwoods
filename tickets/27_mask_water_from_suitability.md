@@ -52,7 +52,7 @@ We want the rule to become:
 Start with **Option C (Natural Earth)**. At 800m output resolution the coarse
 polygons are more than accurate enough, the download is a single small zip,
 and the pipeline step is one `rasterize → multiply` against our existing
-`bay_area_redwood_suitable.tif`.
+`study_area_redwood_suitable.tif`.
 
 If/when we move to finer resolutions (e.g. 30m or 100m) we can swap in TIGER
 or OSM water without changing the overall structure — same "rasterize a land
@@ -64,12 +64,12 @@ mask, multiply through" shape.
 scripts/14_build_land_mask.py
   - download ne_10m_land.zip (cache in data/)
   - clip to study bbox
-  - rasterize to the exact grid/CRS of bay_area_redwood_suitable.tif
+  - rasterize to the exact grid/CRS of study_area_redwood_suitable.tif
   - save data/land_mask.tif (1 = land, 0 = water)
 
 scripts/15_apply_land_mask.py  (or fold into the existing combine step)
   - suitable = suitable * land_mask
-  - overwrite outputs/bay_area_redwood_suitable.tif
+  - overwrite outputs/study_area_redwood_suitable.tif
   - regenerate tiles (scripts/13_generate_web_tiles.py)
 ```
 

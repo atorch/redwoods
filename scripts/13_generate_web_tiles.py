@@ -4,7 +4,7 @@ Generate web tiles from redwood suitability raster.
 
 This script:
 1. Converts suitability raster to Cloud Optimized GeoTIFF (COG)
-2. Pre-generates XYZ tiles for zoom levels 8-14 (Bay Area)
+2. Pre-generates XYZ tiles for zoom levels 8-14 (study area)
 3. Saves tiles in standard XYZ directory structure for web serving
 
 Tiles are 256x256 PNG images with transparency for non-suitable areas
@@ -32,16 +32,19 @@ import json
 
 
 # Configuration
-INPUT_FILE = Path("outputs/bay_area_redwood_suitable.tif")
-COG_FILE = Path("outputs/bay_area_redwood_suitable_cog.tif")
+INPUT_FILE = Path("outputs/study_area_redwood_suitable.tif")
+COG_FILE = Path("outputs/study_area_redwood_suitable_cog.tif")
 # Tiles live under web/ so the whole web directory is a self-contained
 # deployable unit (Cloudflare Pages uploads web/ as-is).
 TILES_DIR = Path("web/tiles/redwood_suitability")
-BBOX_FILE = Path("outputs/bay_area_bbox.json")
+BBOX_FILE = Path("outputs/study_area_bbox.json")
 
-# Zoom levels for Bay Area (regional to neighborhood scale)
+# Zoom levels. We only generate z=8 today — that's the bootstrap tile set
+# shipped to Cloudflare Pages (see web/index.html: maxNativeZoom=8 scales
+# these for higher user zooms). Higher zooms would blow past Pages' 20k-file
+# cap; bump MAX_ZOOM once tiles move to R2 (tickets/24).
 MIN_ZOOM = 8
-MAX_ZOOM = 14
+MAX_ZOOM = 8
 
 # Tile size (standard)
 TILE_SIZE = 256
@@ -275,8 +278,8 @@ def main():
     print("REDWOOD SUITABILITY WEB TILES")
     print("="*70)
     print()
-    print("Generating browser-ready map tiles for Bay Area redwood habitat")
-    print("suitability layer (Layer 2).")
+    print("Generating browser-ready map tiles for the redwood habitat")
+    print("suitability layer (study-area extent).")
     print()
     print("IMPORTANT: Input uses nighttime-only GOES-16 fog detection")
     print("           (06-12 UTC = 11pm-5am PST)")
@@ -307,7 +310,7 @@ def main():
     print("   http://localhost:8000/")
     print()
     print("3. What you'll see:")
-    print("   - Green overlay: Suitable habitat (60.6% of Bay Area)")
+    print("   - Green overlay: Suitable habitat")
     print("   - Red markers: 4 validated ground truth points")
     print("   - Layer control: Toggle visibility in top-left")
     print()

@@ -6,8 +6,8 @@ This implements the academic heuristic:
 "If the place is north of San Simeon, fog currently lasts past noon 80 days/dry season,
 and the place has more than 20 inches/year of rain in the wet season, it had redwoods in 1750."
 
-For Bay Area prototype:
-- Geographic filter: All pixels are north of San Simeon (37° > 35.6°) - always TRUE
+For the northern California study area (Bay Area through Redwood NP):
+- Geographic filter: All pixels are north of San Simeon (>= ~37° > 35.6°) - always TRUE
 - Rainfall: >= 20 inches Nov-Apr
 - Fog: >= 80 days/dry season (GOES-16 satellite BTD detection)
 
@@ -29,13 +29,13 @@ from rasterio.transform import rowcol
 
 # Configuration
 OUTPUT_DIR = Path("outputs")
-RAINFALL_FILE = OUTPUT_DIR / "bay_area_rainfall_20in.tif"
+RAINFALL_FILE = OUTPUT_DIR / "study_area_rainfall_20in.tif"
 
 # GOES-16 fog layer (real satellite data, nighttime BTD detection)
-FOG_FILE = OUTPUT_DIR / "bay_area_fog_80days_goes16.tif"
+FOG_FILE = OUTPUT_DIR / "study_area_fog_80days_goes16.tif"
 
-OUTPUT_FILE = OUTPUT_DIR / "bay_area_redwood_suitable.tif"
-GROUND_TRUTH_FILE = Path("data/redwood_ground_truth_points.csv")
+OUTPUT_FILE = OUTPUT_DIR / "study_area_redwood_suitable.tif"
+GROUND_TRUTH_FILE = Path("web/ground_truth_points.csv")
 
 
 def combine_layers():
@@ -177,7 +177,7 @@ def main():
     print("="*60)
     print()
     print("Implementing the academic heuristic:")
-    print("  1. North of San Simeon (35.6°N) - ✓ ALL Bay Area pixels qualify")
+    print("  1. North of San Simeon (35.6°N) - ✓ ALL study-area pixels qualify")
     print("  2. Wet season rainfall >= 20 inches")
     print("  3. Afternoon fog >= 80 days/dry season")
     print()
@@ -199,8 +199,8 @@ def main():
     print("\n✓ Suitability layer creation complete!")
     print(f"\nOutput files:")
     print(f"  - {OUTPUT_FILE}")
-    print(f"  - {OUTPUT_DIR}/bay_area_rainfall_total.tif")
-    print(f"  - {OUTPUT_DIR}/bay_area_fog_days_goes16.tif")
+    print(f"  - {OUTPUT_DIR}/study_area_rainfall_total.tif")
+    print(f"  - {OUTPUT_DIR}/study_area_fog_days_goes16.tif")
     print()
     print("Next step: Generate web tiles for browser visualization")
     print("  Run: See tickets/21_production_web_tiles.md")

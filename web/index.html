@@ -13,7 +13,7 @@
     3. Tiles are loaded from ./tiles/redwood_suitability/
 
     PRODUCTION BOOTSTRAP:
-    - For the first prod deploy we ship only the 12 zoom-8 tiles (whole
+    - For the first prod deploy we ship only the 18 zoom-8 tiles (whole
       region, one zoom level). maxNativeZoom stretches them at higher zooms.
     - AVAILABLE_TILES below is an allowlist; getTileUrl returns a transparent
       PNG for any tile not in the set so we never 404 on missing tiles.
@@ -169,14 +169,13 @@
         </button>
     </div>
     <div class="info-panel-content">
-        <p><strong>Northern California Coast v0 - Fully Validated</strong></p>
+        <p><strong>Northern California Coast v0</strong></p>
         <p>Green areas show where redwoods could naturally grow based on:</p>
         <ul style="margin: 10px 0; padding-left: 20px; font-size: 13px;">
             <li>Wet season rainfall ≥ 20 inches (PRISM)</li>
             <li>Nighttime fog ≥ 80 days/season (GOES-16)</li>
             <li>North of San Simeon (35.6°N)</li>
         </ul>
-        <p class="status">✓ 30.5% of study area is suitable (24,757 pixels)</p>
         <div class="warning">
             <strong>v0 Notes:</strong>
             <ul style="margin: 5px 0; padding-left: 20px; font-size: 11px;">
@@ -201,8 +200,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // Initialize map centered on Northern California coast (Bay Area to Humboldt)
-    const map = L.map('map').setView([39.0, -123.0], 8);
+    // Initial view: Grove of Old Trees at zoom 8, where the bootstrap z=8
+    // tiles render at 1:1. User can zoom out to see the full study area or
+    // the continental context.
+    const map = L.map('map').setView([38.3988, -122.9914], 8);
 
     // Add basemap
     const basemap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -212,7 +213,7 @@
 
     // Add suitability tile layer.
     //
-    // Bootstrap state: we only ship the 12 zoom-8 tiles that cover the whole
+    // Bootstrap state: we only ship the 18 zoom-8 tiles that cover the whole
     // study bbox. maxNativeZoom: 8 tells Leaflet to keep requesting z=8 tiles
     // and scale them at higher map zooms, so the overlay stays visible as the
     // user zooms in (just pixelated — fine for a regional view).
@@ -222,9 +223,9 @@
     // never 404 on tiles we haven't uploaded. When more tiles are added,
     // append to AVAILABLE_TILES (and raise maxNativeZoom as appropriate).
     const AVAILABLE_TILES = new Set([
-        '8/39/96', '8/39/97', '8/39/98', '8/39/99',
-        '8/40/96', '8/40/97', '8/40/98', '8/40/99',
-        '8/41/96', '8/41/97', '8/41/98', '8/41/99'
+        '8/39/94', '8/39/95', '8/39/96', '8/39/97', '8/39/98', '8/39/99',
+        '8/40/94', '8/40/95', '8/40/96', '8/40/97', '8/40/98', '8/40/99',
+        '8/41/94', '8/41/95', '8/41/96', '8/41/97', '8/41/98', '8/41/99'
     ]);
     const TRANSPARENT_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
@@ -236,8 +237,11 @@
         }
     });
 
+    // minZoom=0 + minNativeZoom=8 lets Leaflet scale the 18 bootstrap z=8
+    // tiles all the way down to the world view — so the overlay stays
+    // visible when the user zooms out past the study area.
     const suitabilityLayer = new FilteredTileLayer('./tiles/redwood_suitability/{z}/{x}/{y}.png', {
-        minZoom: 8,
+        minZoom: 0,
         maxZoom: 14,
         minNativeZoom: 8,
         maxNativeZoom: 8,
@@ -246,67 +250,50 @@
     }).addTo(map);
 
     // Ground truth points
-    const groundTruthPoints = [
-        {
-            lat: 37.823730911052365,
-            lon: -122.17576407861601,
-            name: 'Redwood Regional Park<br>Tres Sendas bridge'
-        },
-        {
-            lat: 37.81106117743245,
-            lon: -122.15608203218845,
-            name: 'Redwood Regional Park<br>Old Church'
-        },
-        {
-            lat: 37.89591501226726,
-            lon: -122.5754528770559,
-            name: 'Muir Woods<br>Bridge 2'
-        },
-        {
-            lat: 37.41059184005661,
-            lon: -122.35939295290684,
-            name: 'The Elbow Tree'
-        },
-        {
-            lat: 38.398846091050444,
-            lon: -122.9914118353171,
-            name: 'Grove of Old Trees'
-        },
-        {
-            lat: 38.53724557870291,
-            lon: -123.00656631208653,
-            name: 'Armstrong Redwoods'
-        },
-        {
-            lat: 40.31467192916288,
-            lon: -123.97800224764826,
-            name: 'Humboldt Redwoods State Park'
-        },
-        {
-            lat: 39.17651561798815,
-            lon: -123.6899076065728,
-            name: 'Navarro River Redwoods State Park'
-        }
-    ];
-
-    // Add markers to layer group for control
+    // Ground truth markers — the CSV is the single source of truth, shared
+    // with the Python pipeline (scripts/01, scripts/04). Columns:
+    //   latitude,longitude,notes
+    // `notes` is single-quoted (because some values contain commas), so the
+    // parser below strips wrapping quotes.
     const markersLayer = L.layerGroup();
 
-    groundTruthPoints.forEach(point => {
-        L.circleMarker([point.lat, point.lon], {
-            radius: 8,
-            fillColor: '#ff0000',
-            color: '#000',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.8
-        })
-        .bindPopup(`<strong>${point.name}</strong><br>` +
-                   `Lat: ${point.lat.toFixed(4)}<br>` +
-                   `Lon: ${point.lon.toFixed(4)}<br>` +
-                   `<em>✓ Suitable habitat</em>`)
-        .addTo(markersLayer);
-    });
+    function parseGroundTruthCsv(text) {
+        const lines = text.trim().split(/\r?\n/).slice(1);  // drop header
+        return lines.map(line => {
+            // Split only on the first two commas — `notes` may contain commas
+            // inside its single-quoted value.
+            const firstComma = line.indexOf(',');
+            const secondComma = line.indexOf(',', firstComma + 1);
+            const lat = parseFloat(line.slice(0, firstComma));
+            const lon = parseFloat(line.slice(firstComma + 1, secondComma));
+            let name = line.slice(secondComma + 1).trim();
+            if (name.startsWith("'") && name.endsWith("'")) {
+                name = name.slice(1, -1);
+            }
+            return { lat, lon, name };
+        });
+    }
+
+    fetch('./ground_truth_points.csv')
+        .then(r => r.text())
+        .then(parseGroundTruthCsv)
+        .then(points => {
+            points.forEach(point => {
+                L.circleMarker([point.lat, point.lon], {
+                    radius: 8,
+                    fillColor: '#ff0000',
+                    color: '#000',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                })
+                .bindPopup(`<strong>${point.name}</strong><br>` +
+                           `Lat: ${point.lat.toFixed(4)}<br>` +
+                           `Lon: ${point.lon.toFixed(4)}<br>` +
+                           `<em>✓ Suitable habitat</em>`)
+                .addTo(markersLayer);
+            });
+        });
 
     markersLayer.addTo(map);
 

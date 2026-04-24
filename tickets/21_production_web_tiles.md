@@ -9,7 +9,7 @@ Create a production-quality, browser-based interactive map that renders the redw
 ## Background
 
 **Current state (COMPLETED):**
-- ✓ We have GOES-16 validated suitability raster (`bay_area_redwood_suitable.tif`)
+- ✓ We have GOES-16 validated suitability raster (`study_area_redwood_suitable.tif`)
 - ✓ Full web interface with tile rendering (`web/index.html`)
 - ✓ Data processing pipeline complete (rainfall + GOES-16 fog)
 - ✓ 31,069 PNG tiles generated (12.1 MB, zoom 8-14)
@@ -35,7 +35,7 @@ Create a production-quality, browser-based interactive map that renders the redw
 
 ### Phase 1: Bay Area (Initial Implementation)
 - Geographic extent: Current Bay Area bounding box (~37.1-38.2°N, ~122.9-121.9°W)
-- Input: `outputs/bay_area_redwood_suitable.tif` (GOES-16 validated)
+- Input: `outputs/study_area_redwood_suitable.tif` (GOES-16 validated)
 - Output: Tile pyramid for zoom levels 8-14 (regional to neighborhood scale)
 
 ### Phase 2: Pacific Coast Expansion (Future)
@@ -180,7 +180,7 @@ web/
   └── app.js (NEW)                # Separated JavaScript
 
 outputs/
-  └── bay_area_redwood_suitable_cog.tif  # Cloud Optimized GeoTIFF
+  └── study_area_redwood_suitable_cog.tif  # Cloud Optimized GeoTIFF
 ```
 
 ### Git Considerations
@@ -194,9 +194,9 @@ outputs/
 ## Dependencies
 
 ### Data (All Complete)
-- ✓ `outputs/bay_area_redwood_suitable.tif` (GOES-16 validated)
-- ✓ `outputs/bay_area_redwood_suitable_cog.tif` (Cloud Optimized GeoTIFF)
-- ✓ `data/redwood_ground_truth_points.csv` (8 locations)
+- ✓ `outputs/study_area_redwood_suitable.tif` (GOES-16 validated)
+- ✓ `outputs/study_area_redwood_suitable_cog.tif` (Cloud Optimized GeoTIFF)
+- ✓ `web/ground_truth_points.csv` (8 locations)
 - ✓ `tiles/redwood_suitability/` (31,069 PNG tiles)
 
 ### Python Libraries (All Installed)

@@ -56,8 +56,8 @@ COMBINE_MULTIYEAR = DATA_DIR_MULTIYEAR.exists() and DATA_DIR_MULTIWEEK.exists()
 
 OUTPUT_DIR = Path("outputs")
 MANIFEST_FILE = DATA_DIR / "download_manifest.json"
-BBOX_FILE = OUTPUT_DIR / "bay_area_bbox.json"
-REFERENCE_FILE = OUTPUT_DIR / "bay_area_rainfall_20in.tif"
+BBOX_FILE = OUTPUT_DIR / "study_area_bbox.json"
+REFERENCE_FILE = OUTPUT_DIR / "study_area_rainfall_20in.tif"
 
 # BTD threshold for fog (Kelvin)
 # Empirically calibrated for California coastal marine layer
@@ -446,7 +446,7 @@ def save_fog_layers(fog_days_grid, output_grid):
     output_meta = output_grid['meta'].copy()
     output_meta.update({'dtype': 'float32', 'nodata': -9999.0})
 
-    fog_continuous_file = OUTPUT_DIR / "bay_area_fog_days_goes16.tif"
+    fog_continuous_file = OUTPUT_DIR / "study_area_fog_days_goes16.tif"
     print(f"\nSaving continuous fog days: {fog_continuous_file}")
     with rasterio.open(fog_continuous_file, 'w', **output_meta) as dst:
         dst.write(fog_days_grid, 1)
@@ -463,7 +463,7 @@ def save_fog_layers(fog_days_grid, output_grid):
     threshold_meta = output_grid['meta'].copy()
     threshold_meta.update({'dtype': 'uint8', 'nodata': 255})
 
-    fog_binary_file = OUTPUT_DIR / "bay_area_fog_80days_goes16.tif"
+    fog_binary_file = OUTPUT_DIR / "study_area_fog_80days_goes16.tif"
     print(f"Saving binary threshold: {fog_binary_file}")
     with rasterio.open(fog_binary_file, 'w', **threshold_meta) as dst:
         dst.write(fog_suitable, 1)

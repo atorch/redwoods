@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """
-Process PRISM wet season rainfall for Bay Area prototype.
+Process PRISM wet season rainfall for the redwood study area.
+
+The study-area bounding box is derived from the ground-truth points CSV
+(plus a margin), so the same pipeline works whether the points cover the
+Bay Area, the full northern California coast, or the entire redwood range.
 
 This script:
 1. Loads ground truth points to define bounding box
 2. Loads PRISM monthly precipitation (Nov-Apr)
-3. Crops to Bay Area bounding box with margin
+3. Crops to study-area bounding box with margin
 4. Sums 6 months to get wet season total
 5. Creates binary threshold layer (>= 20 inches)
 
 Output:
-- bay_area_rainfall_total.tif - wet season total (inches)
-- bay_area_rainfall_20in.tif - binary threshold (1 = suitable, 0 = not)
+- study_area_rainfall_total.tif - wet season total (inches)
+- study_area_rainfall_20in.tif - binary threshold (1 = suitable, 0 = not)
 """
 
 import pandas as pd
@@ -28,7 +32,7 @@ DATA_DIR = Path("data")
 OUTPUT_DIR = Path("outputs")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-GROUND_TRUTH_FILE = DATA_DIR / "redwood_ground_truth_points.csv"
+GROUND_TRUTH_FILE = Path("web/ground_truth_points.csv")
 PRISM_MONTHS = {
     11: "prism_ppt_us_30s_202011_avg_30y",  # November
     12: "prism_ppt_us_30s_202012_avg_30y",  # December
@@ -67,7 +71,7 @@ def load_ground_truth_points():
         'max_lon': max_lon
     }
 
-    print(f"\nBay Area bounding box (with {BBOX_MARGIN}° margin):")
+    print(f"\nStudy area bounding box (with {BBOX_MARGIN}° margin):")
     print(f"  Latitude:  {min_lat:.4f} to {max_lat:.4f}")
     print(f"  Longitude: {min_lon:.4f} to {max_lon:.4f}")
 
@@ -111,7 +115,7 @@ def process_wet_season_rainfall(bbox):
                 print(f"  Resolution: {src.res}")
                 print(f"  Shape: {src.shape}")
 
-            # Crop to Bay Area
+            # Crop to study area bbox
             cropped, transform = crop_raster_to_bbox(src, bbox)
 
             # Get the data (remove band dimension if present)
@@ -166,7 +170,7 @@ def process_wet_season_rainfall(bbox):
     })
 
     # Save wet season total
-    output_path = OUTPUT_DIR / "bay_area_rainfall_total.tif"
+    output_path = OUTPUT_DIR / "study_area_rainfall_total.tif"
     print(f"\nSaving wet season total: {output_path}")
     with rasterio.open(output_path, 'w', **output_meta) as dst:
         dst.write(wet_season_total_inches, 1)
@@ -178,7 +182,7 @@ def process_wet_season_rainfall(bbox):
         'dtype': 'uint8',
         'nodata': 255
     })
-    output_path = OUTPUT_DIR / "bay_area_rainfall_20in.tif"
+    output_path = OUTPUT_DIR / "study_area_rainfall_20in.tif"
     print(f"Saving binary threshold: {output_path}")
     with rasterio.open(output_path, 'w', **threshold_meta) as dst:
         dst.write(rainfall_suitable, 1)
@@ -213,14 +217,14 @@ def validate_at_ground_truth(df, rainfall_suitable, meta):
 
 
 def main():
-    print("Bay Area Rainfall Processing")
+    print("Study Area Rainfall Processing")
     print("="*60)
 
     # Load ground truth and define bbox
     df, bbox = load_ground_truth_points()
 
     # Save bbox for later use
-    bbox_path = OUTPUT_DIR / "bay_area_bbox.json"
+    bbox_path = OUTPUT_DIR / "study_area_bbox.json"
     with open(bbox_path, 'w') as f:
         json.dump(bbox, f, indent=2)
     print(f"\nSaved bounding box to: {bbox_path}")
@@ -233,8 +237,8 @@ def main():
 
     print("\n✓ Rainfall processing complete!")
     print(f"  Outputs saved to: {OUTPUT_DIR}/")
-    print(f"  - bay_area_rainfall_total.tif (continuous values)")
-    print(f"  - bay_area_rainfall_20in.tif (binary threshold)")
+    print(f"  - study_area_rainfall_total.tif (continuous values)")
+    print(f"  - study_area_rainfall_20in.tif (binary threshold)")
     print("\nNext step: Process GOES-16 fog data")
 
 
