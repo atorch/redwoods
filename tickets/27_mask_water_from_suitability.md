@@ -1,6 +1,10 @@
 # Mask Water From Suitability Raster
 
-> **Status:** TODO — capturing intent.
+> **Status:** Done. Implemented with USDA CDL (Option A) since the 10m
+> `data/2025_10m_cdls/2025_10m_cdls.tif` was already on disk — no extra
+> download needed. See `scripts/17_build_land_mask.py` (builds
+> `outputs/study_area_land_mask.tif`) and `scripts/suitability.py` (the
+> shared `rain AND fog AND land` rule). Notes below kept for context.
 
 ## Problem
 

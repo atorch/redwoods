@@ -27,6 +27,8 @@ from pathlib import Path
 import json
 from shapely.geometry import box
 
+from suitability import RAINFALL_THRESHOLD_INCHES
+
 # Configuration
 DATA_DIR = Path("data")
 OUTPUT_DIR = Path("outputs")
@@ -41,9 +43,6 @@ PRISM_MONTHS = {
     3: "prism_ppt_us_30s_202003_avg_30y",   # March
     4: "prism_ppt_us_30s_202004_avg_30y",   # April
 }
-
-# Threshold from heuristic
-RAINFALL_THRESHOLD_INCHES = 20.0
 
 # Bounding box margin (degrees)
 BBOX_MARGIN = 0.3  # ~30km at this latitude

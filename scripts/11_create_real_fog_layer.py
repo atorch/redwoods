@@ -37,6 +37,8 @@ import rasterio
 from pyproj import Transformer
 from scipy.interpolate import griddata
 
+from suitability import FOG_DAYS_THRESHOLD
+
 # Configuration
 # Use multi-year data if available, otherwise fall back to multi-week or single week
 DATA_DIR_MULTIYEAR = Path("data/goes16_multiyear")
@@ -452,8 +454,8 @@ def save_fog_layers(fog_days_grid, output_grid):
         dst.write(fog_days_grid, 1)
         dst.set_band_description(1, "GOES-16 validated fog days per dry season (spatially reprojected)")
 
-    # Save binary threshold (>= 80 days)
-    fog_threshold = 80
+    # Save binary threshold (shared constant from scripts/suitability.py)
+    fog_threshold = FOG_DAYS_THRESHOLD
     fog_suitable = (fog_days_grid >= fog_threshold).astype(np.uint8)
 
     # Handle areas with no data
