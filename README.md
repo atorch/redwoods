@@ -3,6 +3,10 @@ A map of coastal redwoods ([coast redwood ecology and distribution](https://www.
 
 https://youtu.be/cYCajfj5AYk?si=ihWj6SN6KaMkGdgS&t=86
 
+Compared to the [Wikipedia range map](https://upload.wikimedia.org/wikipedia/commons/5/5f/Sequoia_Sequoiadendron_range_map.png) (a static PNG based on late-1900s survey data), we're aiming for a map that is:
+- interactive
+- answering a different question: instead of "where are redwoods growing today?", we want to ask "where _could_ redwoods grow today, based on fog and rainfall (and possibly other factors like soil type)?" — which is very similar to asking "where _might_ redwoods have existed in the 1700s?"
+
 ## Quick Start: Viewing Results
 
 **QGIS (recommended):**

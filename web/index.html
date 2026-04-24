@@ -56,7 +56,8 @@
             padding: 15px;
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            max-width: 320px;
+            width: 320px;
+            box-sizing: border-box;
         }
 
         .info-panel h2 {
@@ -89,34 +90,63 @@
             margin-top: 10px;
         }
 
-        .legend {
-            position: absolute;
-            bottom: 30px;
-            right: 10px;
-            z-index: 1000;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        .info-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
         }
 
-        .legend h4 {
-            margin: 0 0 10px 0;
-            font-size: 14px;
+        .info-panel-header h2 {
+            margin: 0;
+            font-size: 16px;
+            white-space: nowrap;
         }
 
-        .legend-item {
-            margin: 5px 0;
-            font-size: 12px;
+        .toggle-button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: #2c5530;
+            padding: 4px 8px;
+            line-height: 1;
         }
 
-        .legend-color {
+        .info-panel.collapsed .info-panel-content {
+            display: none;
+        }
+
+        .info-panel:not(.collapsed) .icon-collapsed,
+        .info-panel.collapsed .icon-expanded {
+            display: none;
+        }
+
+        /* Color swatches inside the Leaflet layer control labels */
+        .swatch {
             display: inline-block;
-            width: 20px;
-            height: 15px;
-            margin-right: 5px;
+            width: 14px;
+            height: 12px;
+            margin-right: 4px;
             vertical-align: middle;
             border: 1px solid #333;
+            background: rgba(34, 139, 34, 0.8);
+        }
+
+        .swatch-circle {
+            background: rgba(255, 0, 0, 0.8);
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .info-panel {
+                width: auto;
+                left: 10px;
+                right: 10px;
+            }
         }
 
         .status {
@@ -125,71 +155,46 @@
             font-weight: bold;
         }
 
-        .layer-control {
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        .layer-control label {
-            font-size: 13px;
-            display: block;
-            margin: 5px 0;
-            cursor: pointer;
-        }
-
-        .layer-control input {
-            margin-right: 5px;
-        }
     </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-<div class="info-panel">
-    <h2>🌲 Redwood Habitat Suitability</h2>
-    <p><strong>Northern California Coast v0 - Fully Validated</strong></p>
-    <p>Green areas show where redwoods could naturally grow based on:</p>
-    <ul style="margin: 10px 0; padding-left: 20px; font-size: 13px;">
-        <li>Wet season rainfall ≥ 20 inches (PRISM)</li>
-        <li>Nighttime fog ≥ 80 days/season (GOES-16)</li>
-        <li>North of San Simeon (35.6°N)</li>
-    </ul>
-    <p class="status">✓ 30.5% of study area is suitable (24,757 pixels)</p>
-    <div class="warning">
-        <strong>v0 Notes:</strong>
-        <ul style="margin: 5px 0; padding-left: 20px; font-size: 11px;">
-            <li>Fog detection uses <strong>nighttime-only</strong> data (11pm-5am PST)</li>
-            <li>BTD threshold 1.0 K (empirically calibrated with ground truth)</li>
-            <li>Multi-year climatology: 2020-2024 (140 sample days, 5 years)</li>
-            <li>Perfect validation suggests nighttime fog correlates with habitat</li>
+<div class="info-panel" id="infoPanel">
+    <div class="info-panel-header" id="infoPanelHeader">
+        <h2>🌲 Redwood Habitat Suitability</h2>
+        <button type="button" id="toggleInfo" class="toggle-button" aria-label="Toggle info panel" aria-expanded="true">
+            <span class="icon-collapsed">▼</span><span class="icon-expanded">▲</span>
+        </button>
+    </div>
+    <div class="info-panel-content">
+        <p><strong>Northern California Coast v0 - Fully Validated</strong></p>
+        <p>Green areas show where redwoods could naturally grow based on:</p>
+        <ul style="margin: 10px 0; padding-left: 20px; font-size: 13px;">
+            <li>Wet season rainfall ≥ 20 inches (PRISM)</li>
+            <li>Nighttime fog ≥ 80 days/season (GOES-16)</li>
+            <li>North of San Simeon (35.6°N)</li>
         </ul>
-        Future v1: Daytime fog detection for direct "fog past noon" measurement
+        <p class="status">✓ 30.5% of study area is suitable (24,757 pixels)</p>
+        <div class="warning">
+            <strong>v0 Notes:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px; font-size: 11px;">
+                <li>Fog detection uses <strong>nighttime-only</strong> data (11pm-5am PST)</li>
+                <li>BTD threshold 1.0 K (empirically calibrated with ground truth)</li>
+                <li>Multi-year climatology: 2020-2024 (140 sample days, 5 years)</li>
+                <li>Perfect validation suggests nighttime fog correlates with habitat</li>
+            </ul>
+            Future v1: Daytime fog detection for direct "fog past noon" measurement
+        </div>
+        <p class="note">
+            <strong>Data Sources:</strong><br>
+            • Rainfall: PRISM 800m normals<br>
+            • Fog: GOES-16 BTD (Ch13-Ch7)<br>
+            • Time Period: 2020-2024 (140 days over 5 years)<br>
+            • Resolution: 800m
+        </p>
     </div>
-    <p class="note">
-        <strong>Data Sources:</strong><br>
-        • Rainfall: PRISM 800m normals<br>
-        • Fog: GOES-16 BTD (Ch13-Ch7)<br>
-        • Time Period: 2020-2024 (140 days over 5 years)<br>
-        • Resolution: 800m
-    </p>
-</div>
-
-<div class="legend">
-    <h4>Map Layers</h4>
-    <div class="legend-item">
-        <span class="legend-color" style="background: rgba(34, 139, 34, 0.8);"></span>
-        Suitable Habitat
-    </div>
-    <div class="legend-item">
-        <span class="legend-color" style="background: rgba(255, 0, 0, 0.8); border-radius: 50%;"></span>
-        Ground Truth Points
-    </div>
-    <p style="margin-top: 10px; font-size: 11px; color: #666; font-style: italic;">
-        Use layer control (top-left) to toggle visibility
-    </p>
 </div>
 
 <!-- Leaflet JS -->
@@ -305,16 +310,35 @@
 
     markersLayer.addTo(map);
 
-    // Layer control
+    // Layer control. Overlay keys are rendered as HTML by Leaflet, so we
+    // inline color swatches here — this replaces the old bottom-right legend.
     const overlays = {
-        "Suitable Habitat": suitabilityLayer,
-        "Ground Truth Points": markersLayer
+        '<span class="swatch"></span>Suitable Habitat': suitabilityLayer,
+        '<span class="swatch swatch-circle"></span>Ground Truth Points': markersLayer
     };
 
     L.control.layers(null, overlays, {
         position: 'topleft',
-        collapsed: false
+        collapsed: window.innerWidth <= 768
     }).addTo(map);
+
+    // Info panel collapse toggle. Defaults collapsed on mobile so the map
+    // gets the screen; user can tap the header to expand.
+    (function() {
+        const infoPanel = document.getElementById('infoPanel');
+        const header = document.getElementById('infoPanelHeader');
+        const toggleBtn = document.getElementById('toggleInfo');
+
+        if (window.innerWidth <= 768) {
+            infoPanel.classList.add('collapsed');
+            toggleBtn.setAttribute('aria-expanded', 'false');
+        }
+
+        header.addEventListener('click', function() {
+            const nowCollapsed = infoPanel.classList.toggle('collapsed');
+            toggleBtn.setAttribute('aria-expanded', nowCollapsed ? 'false' : 'true');
+        });
+    })();
 
     // Instructions for local development
     console.log('🌲 Redwood Habitat Suitability Map (v0)');
