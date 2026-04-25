@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About — Northern California Coastal Redwood Habitat Suitability</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            color: #222;
+            background: #fafaf7;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: #2c5530;
+            font-size: 26px;
+            margin: 0 0 8px;
+        }
+
+        h2 {
+            color: #2c5530;
+            font-size: 18px;
+            margin: 32px 0 8px;
+        }
+
+        p {
+            font-size: 15px;
+            margin: 10px 0;
+        }
+
+        a {
+            color: #2c5530;
+        }
+
+        .back-link {
+            display: inline-block;
+            font-size: 14px;
+            margin-bottom: 24px;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .lede {
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 24px;
+        }
+
+        ul {
+            font-size: 15px;
+            padding-left: 22px;
+        }
+
+        li {
+            margin: 6px 0;
+        }
+
+        .footnote {
+            font-size: 13px;
+            color: #666;
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a class="back-link" href="./">← Back to map</a>
+
+        <h1>🌲 About this map</h1>
+        <p class="lede">An interactive map of where coastal redwoods <em>could</em> grow along the Northern California coast — based on fog and rainfall.</p>
+
+        <h2>What question is this answering?</h2>
+        <p>
+            The <a href="https://upload.wikimedia.org/wikipedia/commons/5/5f/Sequoia_Sequoiadendron_range_map.png" target="_blank" rel="noopener">Wikipedia range map</a> is a static PNG drawn from survey data. It answers: <em>where are redwoods growing today?</em>
+        </p>
+        <p>
+            <a href="https://redwoods.earth">This map</a> asks a different question: <em>where could redwoods grow today, given enough fog and rainfall?</em> That's very close to asking where redwoods <em>might have existed in the 1700s</em>, before urban development and logging reshaped the landscape.
+        </p>
+        <p>
+            Why fog? During the rainless summer, coastal redwoods harvest moisture from fog directly through their needles and drip the rest to the forest floor — supplying up to 40% of their annual water and effectively letting the trees water themselves when no rain is falling. A <a href="https://link.springer.com/article/10.1007/s004420050683" target="_blank" rel="noopener">three-year study in northern California</a> found the canopy itself roughly doubles fog-water input to the ground: about 34% of annual water under redwoods came from fog drip off the trees, versus 17% in nearby areas without them. (See also <a href="https://www.savetheredwoods.org/redwoods-magazine/autumn-winter-2024/the-science-of-redwoods-and-fog/" target="_blank" rel="noopener">Save the Redwoods League</a> on the science of redwoods and fog.)
+        </p>
+
+        <h2>How it works</h2>
+        <p>
+            We follow a simple heuristic: a place likely supported redwoods if it is north of San Simeon (~35.6°N), receives at least 20 inches of rain in the wet season, and has fog on at least 80 days of the dry season.
+        </p>
+        <ul>
+            <li><strong>Rainfall</strong> — PRISM 800 m wet-season precipitation normals (Nov–Apr).</li>
+            <li><strong>Fog</strong> — GOES-16 satellite brightness-temperature difference (Ch13 − Ch7), aggregated from a 2020–2024 sample. v0 uses nighttime-only detection (11pm–5am PST) as a proxy for marine-layer persistence.</li>
+            <li><strong>Geographic filter</strong> — north of 35.6°N latitude.</li>
+        </ul>
+        <p>
+            Green pixels on the map are places that meet all three criteria. Red dots are ground-truth redwood locations used to sanity-check the model.
+        </p>
+
+        <h2>Links</h2>
+        <ul>
+            <li><a href="https://www.savetheredwoods.org/redwoods/coast-redwoods/" target="_blank" rel="noopener">Coast redwood ecology and distribution</a> — Save the Redwoods League</li>
+            <li><a href="https://research.fs.usda.gov/treesearch/41148" target="_blank" rel="noopener">Foliar uptake of fog in the coast redwood ecosystem</a> — US Forest Service research on how redwoods drink fog directly through their leaves</li>
+            <li><a href="https://upload.wikimedia.org/wikipedia/commons/5/5f/Sequoia_Sequoiadendron_range_map.png" target="_blank" rel="noopener">Wikipedia range map</a> (the map this project is contrasted with)</li>
+            <li><a href="https://youtu.be/cYCajfj5AYk?si=ihWj6SN6KaMkGdgS&t=86" target="_blank" rel="noopener">Background video</a> on coastal redwoods</li>
+        </ul>
+
+        <p class="footnote">
+            v0 — Nighttime fog detection only. A future version will incorporate daytime fog measurement for a more direct match to the "fog past noon" heuristic.
+        </p>
+    </div>
+</body>
+</html>
