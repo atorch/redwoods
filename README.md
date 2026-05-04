@@ -7,6 +7,12 @@ Compared to the [Wikipedia range map](https://upload.wikimedia.org/wikipedia/com
 - interactive
 - answering a different question: instead of "where are redwoods growing today?", we want to ask "where _could_ redwoods grow today, based on fog and rainfall (and possibly other factors like soil type)?" — which is very similar to asking "where _might_ redwoods have existed in the 1700s?"
 
+-- TODO: Link to https://www.parks.ca.gov/?page_id=24723 in about page? And add more validation points based on these state parks
+
+-- TODO: Same link as above, https://www.parks.ca.gov/?page_id=24732, note that it has both 'original growth' and 'current growth' on the map. Our map is essentially intending to pick up the _union_ of those two areas, i.e. to show 'original OR current growth' as suitable habitat, and put it on a zoomable interactive map, instead of a static image. And to derive it from something close to "first principles", i.e. sufficient rainfall and fog. Think about this and mention in the about page (part of the website)
+
+-- TODO: Link to nytimes article about world's tallest tree
+
 ## Quick Start: Viewing Results
 
 **QGIS (recommended):**

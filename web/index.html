@@ -13,7 +13,7 @@
     3. Tiles are loaded from ./tiles/redwood_suitability/
 
     PRODUCTION BOOTSTRAP:
-    - For the first prod deploy we ship only the 18 zoom-8 tiles (whole
+    - For the first prod deploy we ship only the 21 zoom-8 tiles (whole
       region, one zoom level). maxNativeZoom stretches them at higher zooms.
     - AVAILABLE_TILES below is an allowlist; getTileUrl returns a transparent
       PNG for any tile not in the set so we never 404 on missing tiles.
@@ -220,7 +220,7 @@
 
     // Add suitability tile layer.
     //
-    // Bootstrap state: we only ship the 18 zoom-8 tiles that cover the whole
+    // Bootstrap state: we only ship the 21 zoom-8 tiles that cover the whole
     // study bbox. maxNativeZoom: 8 tells Leaflet to keep requesting z=8 tiles
     // and scale them at higher map zooms, so the overlay stays visible as the
     // user zooms in (just pixelated — fine for a regional view).
@@ -230,9 +230,9 @@
     // never 404 on tiles we haven't uploaded. When more tiles are added,
     // append to AVAILABLE_TILES (and raise maxNativeZoom as appropriate).
     const AVAILABLE_TILES = new Set([
-        '8/39/94', '8/39/95', '8/39/96', '8/39/97', '8/39/98', '8/39/99',
-        '8/40/94', '8/40/95', '8/40/96', '8/40/97', '8/40/98', '8/40/99',
-        '8/41/94', '8/41/95', '8/41/96', '8/41/97', '8/41/98', '8/41/99'
+        '8/39/94', '8/39/95', '8/39/96', '8/39/97', '8/39/98', '8/39/99', '8/39/100',
+        '8/40/94', '8/40/95', '8/40/96', '8/40/97', '8/40/98', '8/40/99', '8/40/100',
+        '8/41/94', '8/41/95', '8/41/96', '8/41/97', '8/41/98', '8/41/99', '8/41/100'
     ]);
     const TRANSPARENT_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 

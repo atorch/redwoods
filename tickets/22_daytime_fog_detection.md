@@ -1,241 +1,147 @@
-# Daytime Fog Detection for Redwood Habitat Suitability
+# Daytime fog detection — measure "fog past noon" directly
 
-**PRIORITY: HIGH** - Critical for validating original heuristic
+> **Status:** TODO — design firmed up against Torregrosa et al. 2016 (GOES-W fog/low-cloud climatology for coastal CA) and Rastogi et al. 2016 (GOES albedo fog detection for the Channel Islands). **Priority:** high (the v0 nighttime-only signal isn't measuring the ecological criterion).
 
-**STATUS UPDATE (2026-04-13):**
-Current v0 implementation shows 99.8% of pixels meet fog criterion, making it essentially ineffective as a discriminating factor. Investigation suggests this may be due to nighttime-only sampling capturing pre-dawn marine layer (which is nearly universal along California coast) rather than the ecologically-critical "fog past noon" persistence specified in the original heuristic.
+## Problem
 
-## Objective
+The original heuristic is **"fog past noon ≥ 80 days/season."** Our v0 instead measures *nighttime* low-cloud frequency (06–12 UTC = 11pm–5am PST) using BTD (Ch13 − Ch7). We do this because Ch7 (3.9 µm) is contaminated by solar reflection during the day — a single fixed BTD threshold does not work in daylight.
 
-Implement daytime fog detection using GOES-16 visible channel reflectance to complement the current nighttime BTD-based fog detection, enabling full 24-hour fog frequency analysis and proper validation of the "fog past noon 80 days/season" criterion.
+The ecological gap: marine layer commonly forms after sunset and burns off by mid-morning. A pixel that has nighttime fog at 4am but clears by 8am gives the trees no daytime canopy interception during photosynthetically-active hours — yet our v0 counts it as a "fog day." The Dawson / Johnstone work on canopy interception is about *daytime* fog persistence; that's what we should be measuring.
 
-## Background
+Note: Torregrosa et al. 2016 shows that for the CA coast, *daytime* FLCC hours/day are actually **higher** than nighttime over the ocean and most coastal land (their Fig. 5/6c). Inland incursion zones tilt nighttime, but the ecologically relevant "in the fog belt during PAR hours" signal is well-resolved at noon-window sampling.
 
-**Current limitation:**
-- Our current fog detection uses BTD (Brightness Temperature Difference): BT_Ch13 (10.3 µm) - BT_Ch7 (3.9 µm)
-- BTD **only works at night** because Ch7 (3.9 µm) contains solar reflection during daytime
-- Current implementation samples 06-12 UTC (11pm-5am PST) = nighttime/pre-dawn fog only
-- This means we're missing daytime fog, particularly the critical "fog past noon" criterion from the original heuristic
+## Recommended scope changes vs. earlier draft
 
-**Why this matters for redwood habitat:**
-- Original heuristic specifically mentions "fog past noon" as important
-- Coastal redwoods rely on summer fog for moisture during dry season
-- Daytime fog persistence (especially afternoon fog) is ecologically significant
-- Current nighttime-only detection may underestimate fog importance in some areas
+After reading the two CA-specific papers we should change three things:
 
-**References:**
-- NOAA/CIMSS GOES-16 Fog Detection Best Practices
-- "BTD works best at night; daytime requires visible channel analysis"
-- Standard operational fog products use different algorithms for day vs night
+1. **Switch to GOES-18, not later — now.** Torregrosa et al. used GOES-W (the predecessor to GOES-18) for exactly our study area and found r²=0.83 against airport fog ceilings at Monterey. CA sits at ≈60° satellite zenith from GOES-16; visible-channel and spatial-homogeneity tests both degrade with view angle. Doing the v1 daytime work on GOES-16 means we'd validate against a known-handicapped sensor and migrate later anyway.
+2. **Start with a visible-only baseline (Rastogi 2016), not a full multi-test classifier.** Rastogi gets r²=0.74–0.75 against ground insolation using a single threshold (albedo > 0.3) on the 0.65 µm channel, no IR. That's our simplest viable v1 — and it's the one validated for our use case. Add IR tests only if the visible-only output has visible failure modes.
+3. **Subset on download.** Full CONUS CMIPC files at 0.5 km (Ch2) are ~50 MB each; our bbox is ~5% of CONUS. Cropping during download reduces per-file size by ~20×, which is what makes a 4-channel daytime archive fit on this disk at all (see "Storage budget" below).
 
-## Technical Approach
+## Time period: 2023–2025
 
-### Daytime Fog Detection Method: Visible Channel Reflectance
+GOES-18 became operational GOES-West on **2023-01-04** (NESDIS announcement). Earlier years would require GOES-17, which had a known loop-heat-pipe anomaly that degraded its IR channels especially during eclipse seasons (Aug–Sep — exactly our window). Ch2 visible was unaffected, so a GOES-17+18 stitch would technically work for Option A — but the simplicity win of staying single-satellite is large.
 
-**Primary approach:** GOES-16 Channel 2 (0.65 µm visible red)
+**Recommend: use dry seasons 2023, 2024, 2025 — three full May–Oct windows.** As of 2026-05-04 the current dry season has just begun; we can't include it as a complete season. Three years is fewer than the 5-year multi-year design in `16_download_multiyear_goes16.py`, but Torregrosa's interannual CV in our coastal target zones is < 0.10 (their Fig. 4b), so 3 years is enough to characterize the climatology for v1. Add 2026 once it completes in October.
 
-**How it works:**
-- Fog/low clouds have high reflectance in visible channels (appear bright)
-- Use reflectance threshold + texture analysis to distinguish fog from higher clouds
-- Combine with IR brightness temperature to distinguish fog (cold) from land (warm)
-- Time of day: 19-00 UTC (12pm-5pm PST) = afternoon fog window
+## Time window
 
-**Algorithm (simplified):**
-```
-Daytime fog detected when:
-1. Ch2 reflectance > threshold (e.g., 0.4-0.6)
-2. BT_Ch13 < threshold (e.g., 280K = low cloud)
-3. BT_Ch13 - BT_Ch14 < small (uniform cloud top)
-4. Local time 12pm-5pm PST (afternoon fog)
-```
+**19:00–22:00 UTC** (≈ 12:00–15:00 PDT during May–Oct). Slight widening from the earlier 19:00–21:00 proposal to align with Rastogi's "afternoon" window (12:00–15:30 PST = 19:00–22:30 UTC during PDT). Still solidly past morning burn-off; ends before the late-afternoon onshore push.
 
-**Challenges:**
-- Visible channels only available during daytime (need solar illumination)
-- Must distinguish fog from other bright surfaces (land, high clouds)
-- Threshold tuning required for coastal California conditions
-- More complex than nighttime BTD
+- GOES CONUS scans run every 5 min, so 3 hours = ~36 scans/day. At our existing 2-scans-per-hour cadence (≈30 min between samples) that's 6 scans/day — enough to denoise against missing scans and brief sun glints, and a "fog day" is a day where any scan in the window classifies as low cloud.
+- Timezone trap: GOES filenames are UTC. CA observes PDT (UTC−7) from mid-March through early November. May–Oct is fully PDT. Pick UTC slots directly and document the implied local-time window; don't round-trip through `pytz`.
 
-### Combined Day/Night Fog Frequency
+## Algorithm options
 
-**Integration strategy:**
-- Nighttime detection: 06-12 UTC using BTD (current implementation)
-- Daytime detection: 19-00 UTC using visible reflectance (this ticket)
-- Combine into single fog frequency layer: days with fog detected in either window
-- Alternative: separate "nighttime fog days" and "daytime fog days" layers
+Three options, in order of increasing complexity. Default to **Option A** for v1.
 
-**Output:**
-- Total fog days per dry season (nighttime OR daytime)
-- Optional: separate nighttime/daytime fog frequency rasters
-- Updated suitability layer using combined fog frequency
+### Option A — Visible-only albedo threshold (Rastogi 2016)
 
-## Implementation Tasks
+Single test on GOES-18 ABI Channel 2 (0.64 µm visible):
 
-### Task 1: Research and Algorithm Design
+1. Convert Ch2 reflectance to albedo using NESDIS pre/post-launch calibration coefficients.
+2. Threshold: **albedo > 0.30** ⇒ cloud. (Rastogi used 0.3 from ISCCP; not sensitive to seasonal solar geometry per their ECDF analysis.)
+3. Skip the first/last 30 min around sunrise/sunset to avoid extreme solar-zenith albedo inflation. (Not actually a constraint inside our 12–15 PDT window — flagging for completeness.)
+4. Aggregate: a "daytime fog day" = any in-window scan exceeds threshold.
 
-- [ ] Review NOAA/CIMSS daytime fog detection algorithms
-- [ ] Study operational fog products (NESDIS, GOES-R Algorithm Working Group)
-- [ ] Determine optimal visible channel (Ch2 0.65 µm vs Ch3 0.86 µm)
-- [ ] Define reflectance and temperature thresholds for coastal CA
-- [ ] Design validation approach using ground truth
+**Why this is enough:** Coastal CA summer clouds are nearly exclusively low marine stratus (Iacobellis & Cayan 2013, cited by Rastogi); high cirrus is <2% of the bbox by hours/day. So we don't actually need the cloud-top temperature filter that papers in mixed-cloud regimes need.
 
-### Task 2: GOES-16 Visible Channel Data Access
+**Why we don't need to worry about non-marine fog types**: the only ecologically relevant signal for redwoods is *marine* stratus touching coastal canopy. The other dry-season cloud/aerosol types over our bbox are either out of season or land far from redwood-suitable terrain:
+- **Tule fog** is a winter (Nov–Mar) Central Valley radiation-fog phenomenon. Our May–Oct window won't see it.
+- **Wildfire smoke** (Aug–Oct) is the real residual contaminant — thick smoke can have albedo > 0.3 and would mimic fog over inland pixels. Coastal marine air mass is mostly insulated, but the layer should be inspected against CALFIRE perimeters as a sanity check; consider masking heavy-smoke-day pixels in v1.5 if needed.
+- **High cirrus** is <2% bbox-hours per Torregrosa, denser at the OR border. Option B's BT > 270 K filter handles it if it shows up.
+- **Marine intrusion through Carquinez** into the Delta is *true* marine fog reaching inland — a true positive, not a contaminant.
 
-- [ ] Verify Ch2 (0.65 µm) availability in CONUS mesoscale sectors
-- [ ] Update download script to include Ch2 alongside Ch7/Ch13
-- [ ] Modify download to use daytime hours (19-00 UTC)
-- [ ] Estimate additional storage requirements (~1.5x current)
+**Pros:** one channel, simplest pipeline, validated against ground insolation in our exact climate regime. **Cons:** doesn't discriminate occasional summer high cloud (small effect for CA, larger if we extend N into Oregon — bbox edge case worth checking against the layer once produced); no smoke discrimination.
 
-### Task 3: Daytime Fog Detection Implementation
+### Option B — Add a warm-cloud-top filter (Rastogi + Ch13)
 
-- [ ] Create `scripts/13_process_daytime_fog.py`
-- [ ] Implement visible reflectance calculation from raw Ch2 data
-- [ ] Implement multi-threshold fog detection algorithm
-- [ ] Apply same reprojection and regridding as nighttime detection
-- [ ] Output: daytime fog frequency raster (800m, WGS84)
+If visible-only mis-classifies high cloud as fog (we'll see this in the layer):
 
-### Task 4: Validation
+5. Add Ch13 (10.3 µm long-wave IR) test: keep classification only where brightness temperature > **270 K** (Mahdavi et al. 2020 threshold). High cirrus has cold tops and gets dropped.
 
-- [ ] Compare daytime fog detections with webcam images (if available)
-- [ ] Cross-reference with NOAA operational fog products
-- [ ] Validate against known fog climatology for Bay Area
-- [ ] Check consistency: do daytime and nighttime fog overlap spatially?
+Two channels, ~2× IR storage but trivial compared to Ch2.
 
-### Task 5: Integration with Suitability Layer
+### Option C — Month-hour matched IR differencing (Torregrosa / Jedlovec & Laws 2003)
 
-- [ ] Combine nighttime and daytime fog frequency
-- [ ] Update `scripts/04_combine_suitability.py` to use combined fog
-- [ ] Regenerate suitability raster with day+night fog
-- [ ] Compare with nighttime-only version (how much difference?)
+The most rigorous option and the one that *could* unify day and night under one pipeline. Per-pixel, per-month-hour, build clear-sky baselines from a multi-year archive:
 
-### Task 6: Documentation
+- LND = largest negative (Ch13 − Ch7) difference seen at this pixel/month-hour
+- SPD = smallest positive difference
+- WTV = warmest Ch13 brightness temperature
 
-- [ ] Document daytime fog algorithm in code comments
-- [ ] Update README with day+night fog detection explanation
-- [ ] Add visualization comparing nighttime-only vs combined fog
-- [ ] Update web interface legend to reflect combined fog data
+Then classify each scan against those baselines:
+- BTD < 0 and |BTD| < |LND − 5.1 K (land) / 4.1 K (ocean)| ⇒ cloud
+- Else if (BTD − SPD) > 2.0 K ⇒ cloud
+- Then on remaining "clear": if Ch13 BT < WTV − 18.5 K ⇒ cloud (catches missed cold cloud)
+- Daytime visible refinement (Reinke 1992): per-pixel month-hour-specific min-albedo background; flag pixels exceeding background + threshold.
 
-## Dependencies
+This is what makes BTD work in daylight — the *baselines absorb the diurnal solar contamination* of Ch7, so the relative test stays meaningful. But it requires a fully populated month-hour archive (every month-hour bin needs ≥ ~30 clear-sky samples), per-pixel statistics, and is operationally significant work. Defer to v2.
 
-### Data
-- GOES-16 Channel 2 (0.65 µm) mesoscale sector data
-- Existing Ch7/Ch13 nighttime data (already downloaded)
-- Same temporal coverage: May, June, July, August, September
+## Storage budget
 
-### Python Libraries
-- Existing: `netCDF4`, `numpy`, `rasterio`, `pyproj`
-- May need: additional GOES processing utilities
+The constraint: **~38 GB free on disk** as of 2026-05-04. Current GOES-16 archive is 2.9 GB (one season, nighttime Ch7 only). The ticket previously cited "~16 GB" — that's the projected fully-populated multi-year nighttime archive (Ch7 + Ch13, 4 weeks/year × 5 years × 7-hr nighttime window × 2 scans/hr = ~3,920 files × ~4 MB).
 
-### Research
-- NOAA/CIMSS algorithm documentation
-- Coastal California fog climatology literature
-- Validation data sources (webcams, surface obs)
+Per-channel CMIPC file sizes (full CONUS):
 
-## Success Criteria
+| Channel | Native res | File size |
+|---|---|---|
+| Ch2 (0.64 µm visible) | 0.5 km | ~50 MB |
+| Ch5 (1.6 µm SWIR) | 1 km | ~12 MB |
+| Ch7 (3.9 µm) | 2 km | ~4 MB |
+| Ch13 (10.3 µm) | 2 km | ~4 MB |
 
-1. ✓ Daytime fog detection algorithm implemented and documented
-2. ✓ Validation shows reasonable agreement with known fog patterns
-3. ✓ Combined day+night fog frequency layer generated
-4. ✓ Suitability layer updated with combined fog data
-5. ✓ Visual comparison shows improvement over nighttime-only
-6. ✓ Web interface updated to display combined fog frequency
-7. ✓ Documentation clearly explains day vs night detection methods
+Daytime sample: 4 weeks/year × 7 days × 3 years (2023–2025) × 3-hr window × 2 scans/hr = 504 scans/channel.
 
-## Timeline Estimate
+| Approach | Channels | Full CONUS | Subset to bbox |
+|---|---|---|---|
+| Option A (visible-only) | Ch2 | **25 GB** | ~1.3 GB |
+| Option B (visible + warm IR) | Ch2 + Ch13 | **27 GB** | ~1.4 GB |
+| Option C-day (full multi-test) | Ch2 + Ch5 + Ch7 + Ch13 | **35 GB** | ~1.7 GB |
 
-**Research and algorithm design:** 4-6 hours
-- Literature review
-- Algorithm specification
-- Threshold determination
+**Conclusion:** Option A and B fit on disk even without subsetting; C is borderline. Subsetting on download (open with `xarray`/`netCDF4`, crop to `outputs/study_area_bbox.json`, write reduced NetCDF) is still strongly recommended — it future-proofs against extending the archive (e.g., adding 2026 in October, or extending to 5+ years) and speeds up downstream processing. The existing `16_download_multiyear_goes16.py` does *not* subset — that's the script change.
 
-**Implementation:** 8-12 hours
-- Download visible channel data
-- Code daytime detection algorithm
-- Validation and tuning
-- Integration with existing pipeline
+## Validation plan
 
-**Total:** ~12-18 hours (3-4 work sessions)
+Two independent ground-truth sources, both used by the reference papers:
 
-## Outputs
+1. **CIMIS solar radiation correlation** (Rastogi-style). Pull daily insolation totals from CIMIS stations inside the bbox (e.g., Bodega Bay, Pepperwood-area, Big Sur, Eureka). Cloudy days should anti-correlate with insolation. Rastogi reports r²=0.74–0.75; that's the bar.
+2. **Airport ceiling correlation** (Torregrosa-style). Pull METAR cloud-ceiling reports < 400 m for nearby ASOS stations (Arcata, Monterey, Half Moon Bay, Crescent City). Days flagged "fog" by the satellite layer should correlate with ceiling-below-400m hours. Torregrosa reports r²=0.83 at Monterey.
 
-### Files to Create
+Both pair with ticket 29 (negative control points) — Sacramento, Bakersfield etc. should drop near-zero on the daytime layer. The v0 nighttime layer's miscalls there are the size of the v1 measurement gain.
+
+## Out of scope (and why)
+
+- **Snow discrimination via Ch5 (1.6 µm).** Neither Torregrosa nor Rastogi uses it for CA. Snow contamination is a Sierra/Cascades concern; the 80-day fog criterion already implicitly excludes those zones (FLCC < 1 h/d above ~1000 m per Torregrosa Fig. 9). A simple elevation mask is cheaper than a channel.
+- **Spatial homogeneity (5×5 std-dev) tests.** Cermak/Mahdavi developed these for sea-fog over open ocean where stratus-vs-cumulus matters. CA marine stratus is morphologically distinct enough that albedo + warm-cloud filter catches it. Reconsider if Option B has visible false positives over inland summer convection.
+- **Cloud-base height / true fog inundation.** Satellite measures cloud *tops*. Rastogi gets to per-pixel fog presence by combining 100-m DEM with airport ceilometer ECDFs of cloud-base height — substantial extra work and only validated for Channel Islands. For v1, "low cloud overlying canopy elevation" is a defensible proxy; flag the gap explicitly when reporting the layer.
+- **Cloud-top altitude** (ABI alone can't give this without ancillary data).
+- **Fog drip quantity** (needs foliage-interception modeling on top of presence).
+- **Switching to MODIS/VIIRS** (finer spatial, much worse temporal — wrong tradeoff for a "hours of fog past noon" criterion).
+
+## Sketch
 
 ```
 scripts/
-  └── 13_process_daytime_fog.py        # Daytime fog detection
+  18_download_daytime_goes18.py    # GOES-18, 19-22 UTC, Ch2 (+ Ch13 if Option B), subset on download
+  19_create_daytime_fog_layer.py   # albedo > 0.30 (+ optional BT > 270 K), aggregate to days/season
 
 outputs/
-  ├── bay_area_fog_nighttime.tif       # Nighttime fog (current)
-  ├── bay_area_fog_daytime.tif         # Daytime fog (new)
-  └── bay_area_fog_combined.tif        # Day+night combined (new)
-
-data/goes16_multi_week_daytime/        # Daytime visible channel data
+  study_area_fog_days_daytime.tif    # daytime fog days per dry season
+  study_area_fog_days_combined.tif   # nighttime OR daytime — the original heuristic actually wants daytime-only
 ```
 
-### Updated Files
-
-```
-scripts/04_combine_suitability.py      # Use combined fog frequency
-scripts/12_download_multi_week_goes16.py  # Add Ch2 download option
-README.md                               # Update fog detection explanation
-web/index.html                          # Update legend/metadata
-```
-
-## Risks & Mitigations
-
-### Risk 1: Daytime Algorithm More Complex
-- **Issue:** Visible channel fog detection harder than BTD
-- **Mitigation:**
-  - Start with simple threshold approach
-  - Use existing NOAA algorithms as reference
-  - Accept lower accuracy for v1, iterate
-
-### Risk 2: Threshold Tuning Difficult
-- **Issue:** Reflectance thresholds may not generalize across region
-- **Mitigation:**
-  - Test on Bay Area first (known fog climatology)
-  - Compare with operational fog products
-  - Consider adaptive thresholds by location
-
-### Risk 3: Additional Data Storage
-- **Issue:** Visible channel data adds ~50% more storage
-- **Mitigation:**
-  - Download only Ch2 for daytime hours (not full day)
-  - Clean up test data regularly
-  - Compress NetCDF files if needed
-
-### Risk 4: Day+Night Integration Unclear
-- **Issue:** How to combine nighttime and daytime fog frequencies?
-- **Mitigation:**
-  - Default: logical OR (fog detected in either window)
-  - Alternative: separate layers for different use cases
-  - Document assumptions clearly
+`04_combine_suitability.py` switches to the daytime layer (the ecological criterion is "fog past noon," not "fog at any time"). Worth a one-time comparison: how much smaller does the suitable area get when we go from nighttime-OR to daytime-only? That delta is the size of the v0 measurement error.
 
 ## References
 
-### NOAA/CIMSS Documentation
-- [GOES-R Fog/Low Stratus Algorithm](https://www.star.nesdis.noaa.gov/goesr/documents/ATBDs/Baseline/ATBD_GOES-R_Fog_v2.5_July2012.pdf)
-- [Daytime Fog Detection Best Practices](https://cimss.ssec.wisc.edu/satellite-blog/archives/category/fog)
+Local PDFs (in repo root, not committed):
+- *Earth and Space Science - 2015 - Torregrosa - GOES-derived fog and low cloud indices for coastal north and central.pdf* — directly relevant; uses GOES-W (precursor to GOES-18), month-hour matched algorithm, validated against airport ceilings (r² = 0.83 at Monterey).
+- *ei-d-15-0033.1.pdf* (Rastogi et al. 2016) — visible-only albedo > 0.30, validated against ground insolation (r² ≈ 0.75), shows DEM-downscaling path for cloud-base.
 
-### Scientific Literature
-- Bendix et al. (2006): "Ground Fog Detection from Space"
-- Cermak & Bendix (2008): "A novel approach to fog/low stratus detection using Meteosat 8 data"
-- Ellrod (1995): "Advances in the detection and analysis of fog at night using GOES multispectral infrared imagery"
-
-### Operational Products
-- [NOAA GOES Fog Product](https://www.star.nesdis.noaa.gov/goes/index.php)
-- [NWS Fog Forecasting](https://www.weather.gov/ajk/FogForecastingChallenges)
-
-## Follow-Up Tickets
-
-After completing this:
-- [ ] Expand daytime fog detection to full Pacific Coast
-- [ ] Time series analysis: fog trends over multiple years
-- [ ] Fog climatology visualization (seasonal patterns)
-- [ ] Integration with climate model projections (future fog?)
-
-## Notes
-
-- This ticket addresses the limitation noted in Ticket #21 (Production Web Tiles)
-- Current v0 web tiles use nighttime-only fog; this enables v1 with full fog data
-- Particularly important for "fog past noon" criterion in original heuristic
-- May reveal different spatial patterns than nighttime fog alone
+Other sources cited in the design above:
+- Mahdavi et al. 2020, *A probability-based daytime algorithm for sea fog detection using GOES-16 imagery*, IEEE J-STARS — multi-test classifier; PoD 0.77, FAR 0.09 (over ocean).
+- Cermak & Bendix 2008, *A novel approach to fog/low stratus detection using Meteosat 8 data*.
+- Jedlovec & Laws 2003 / Lee et al. 2011 — the temporally-continuous month-hour matching technique.
+- GOES-R Fog/Low Stratus ATBD (NESDIS, current rev).
+- Iacobellis & Cayan 2013 — supports the "CA summer clouds are ~exclusively low marine stratus" assumption that lets us skip cirrus filtering in Option A.
