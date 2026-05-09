@@ -1,14 +1,16 @@
 # Negative control points: expose false positives in the suitability model
 
-**Status:** open · **Priority:** medium · **Created:** 2026-05-04
+**Status:** open · **Priority:** medium · **Created:** 2026-05-04 · **Last updated:** 2026-05-05 · **Unblocks:** ticket 30 (weighted suitability rule)
 
 ## Why this matters
 
-Validation is currently one-sided. Every entry in `web/ground_truth_points.csv` is a place we *expect* the model to call suitable, and we tune thresholds (notably the 1.0 K BTD cutoff in `scripts/11_create_real_fog_layer.py`) until those points pass. We have no points where the model is supposed to say "not suitable" — so we have no way to measure false-positive rate, and the validation argument is partly circular.
+Validation is currently one-sided. Every entry in `web/ground_truth_points.csv` is a place we *expect* the model to call suitable, and we've tuned thresholds (the albedo cutoff in `scripts/19_create_daytime_fog_layer.py` and the fog-day count in `scripts/suitability.py`) until those points pass. We have no points where the model is supposed to say "not suitable" — so we have no way to measure false-positive rate, and the validation argument is partly circular.
 
-A second concern that motivates this ticket: BTD is a proxy for a proxy. The algorithm detects *"there is a low water cloud somewhere in the column above this pixel"* — it does **not** detect "fog touching the canopy." A pixel with marine stratus floating 1500 m above ground produces the same BTD signature as fog actually wetting trees at 200–400 m canopy height. Coastal redwoods depend on **canopy interception** — droplets condensing on needles and dripping to the root zone (Dawson 1998; up to ~45% of summer water comes from fog drip). Our model is silent on whether the cloud it sees is interacting with the canopy at all.
+A second concern that motivates this ticket: satellite cloud detection is a proxy for a proxy. The albedo-threshold algorithm detects *"there is a sufficiently bright cloud somewhere in the column above this pixel during the late-morning-to-early-afternoon window"* — it does **not** detect "fog touching the canopy." A pixel with marine stratus floating 1500 m above ground produces the same albedo signature as fog actually wetting trees at 200–400 m canopy height. Coastal redwoods depend on **canopy interception** — droplets condensing on needles and dripping to the root zone (Dawson 1998; up to ~45% of summer water comes from fog drip). Our model is silent on whether the cloud it sees is interacting with the canopy at all.
 
-Negative controls won't fix that gap, but they're how we'd notice if the gap is hurting us: if Sacramento or Mt Lassen come out green, we know the model is firing on something that isn't redwood-relevant fog.
+Negative controls won't fix that gap, but they're how we'd notice if the gap is hurting us: if Sacramento or Mt Lassen come out green, we know the model is firing on something that isn't redwood-relevant fog (e.g. high-terrain summer cumulus over the Trinity Alps, or bright dry surfaces tripping the albedo threshold).
+
+Adding negatives is also the **prerequisite for ticket 30** (weighted half-plane rule). We can't fit a calibrated linear separator from positives alone — the dry-interior side of the boundary is unconstrained without "no" points to anchor it.
 
 ## Proposed control points
 
@@ -35,12 +37,13 @@ Sacramento, Modesto, and Mineral are inside the current study bbox (35.71–42.0
 ## Success criteria
 
 - All 4 negative points return "not suitable" in `04_combine_suitability.py`.
-- If any return "suitable," that's a real signal — investigate before suppressing. Likely culprits: BTD threshold too lenient (1.0 K vs literature 4–7 K), nighttime-only sampling catching transient summer stratus inland, or fog-layer interpolation bleeding inland.
+- If any return "suitable," that's a real signal — investigate before suppressing. Likely culprits in the current daytime-albedo pipeline: albedo threshold too low (bright dry surfaces classified as cloud), afternoon cumulus over high terrain (e.g. Trinity Alps in July) classified as marine stratus, or fog-layer nearest-neighbor interpolation bleeding inland from coastal pixels.
 
 ## Out of scope (related, deferred)
 
-- Fixing the canopy-interception gap directly — that needs cloud-top altitude, daytime persistence, or boundary-layer height data. Tracked in ticket 22 (daytime fog) and would warrant a separate ticket for cloud-top-height as the model matures.
+- Fixing the canopy-interception gap directly — that needs cloud-top altitude or boundary-layer height data; daytime persistence is partly addressed by ticket 22 but cloud-top altitude warrants its own ticket as the model matures.
 - A formal confusion matrix with hundreds of points. The 4 controls above are a sanity check, not a statistical evaluation.
+- Re-shaping the suitability rule itself (box → half-plane). Tracked in ticket 30; depends on this one.
 
 ## References
 

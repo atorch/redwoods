@@ -20,15 +20,15 @@
     - When we add higher zooms we'll hit Cloudflare Pages' 20k-file cap; at
       that point move tiles to R2 (see tickets/24_deploy_tiles_cloudflare_r2.md).
 
-    v0 LIMITATION:
-    - Uses nighttime-only fog detection (11pm-5am PST)
-    - Future enhancement for daytime fog: See tickets/22_daytime_fog_detection.md
+    Fog input: GOES-18 Ch2 albedo > 0.25 at 17-21 UTC (10 AM - 2 PM PDT) —
+    marine-layer cloud overhead at any point in late morning through early
+    afternoon (Rastogi et al. 2016, ticket 22).
 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Northern California Coastal Redwood Habitat Suitability (v0 - Nighttime Fog)</title>
+    <title>Northern California Coastal Redwood Habitat Suitability</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -173,28 +173,18 @@
         </button>
     </div>
     <div class="info-panel-content">
-        <p><strong>Northern California Coast v0</strong></p>
+        <p><strong>Northern California Coast</strong></p>
         <p>Green areas show where redwoods could naturally grow based on:</p>
         <ul style="margin: 10px 0; padding-left: 20px; font-size: 13px;">
             <li>Wet season rainfall ≥ 20 inches (PRISM)</li>
-            <li>Nighttime fog ≥ 80 days/season (GOES-16)</li>
+            <li>Marine-layer cloud overhead ≥ 50 days/season<br>(GOES-18, 10 AM – 2 PM PDT)</li>
             <li>North of San Simeon (35.6°N)</li>
         </ul>
-        <div class="warning">
-            <strong>v0 Notes:</strong>
-            <ul style="margin: 5px 0; padding-left: 20px; font-size: 11px;">
-                <li>Fog detection uses <strong>nighttime-only</strong> data (11pm-5am PST)</li>
-                <li>BTD threshold 1.0 K (empirically calibrated with ground truth)</li>
-                <li>Multi-year climatology: 2020-2024 (140 sample days, 5 years)</li>
-                <li>Perfect validation suggests nighttime fog correlates with habitat</li>
-            </ul>
-            Future v1: Daytime fog detection for direct "fog past noon" measurement
-        </div>
         <p class="note">
             <strong>Data Sources:</strong><br>
             • Rainfall: PRISM 800m normals<br>
-            • Fog: GOES-16 BTD (Ch13-Ch7)<br>
-            • Time Period: 2020-2024 (140 days over 5 years)<br>
+            • Fog: GOES-18 Ch2 albedo > 0.25 at 17–21 UTC (10 AM – 2 PM PDT)<br>
+            • Time Period: 2023–2025 dry seasons (May/Jun/Aug/Sep weeks)<br>
             • Resolution: 800m
         </p>
         <p class="note" style="text-align: right;">
@@ -253,31 +243,38 @@
         minNativeZoom: 8,
         maxNativeZoom: 8,
         opacity: 0.7,
-        attribution: 'Suitability: PRISM + GOES-16 (nighttime fog)'
+        attribution: 'Suitability: PRISM + GOES-18 (10 AM – 2 PM PDT fog)'
     }).addTo(map);
 
     // Ground truth points
     // Ground truth markers — the CSV is the single source of truth, shared
-    // with the Python pipeline (scripts/01, scripts/04). Columns:
+    // with the Python pipeline. Required leading columns:
     //   latitude,longitude,notes
-    // `notes` is single-quoted (because some values contain commas), so the
-    // parser below strips wrapping quotes.
+    // The annotate script (scripts/annotate_ground_truth_points.py) appends
+    // sampled-value columns after `notes`; the parser only consumes the first
+    // three. `notes` is single-quoted when it contains commas; unquoted
+    // otherwise.
     const markersLayer = L.layerGroup();
 
     function parseGroundTruthCsv(text) {
         const lines = text.trim().split(/\r?\n/).slice(1);  // drop header
         return lines.map(line => {
-            // Split only on the first two commas — `notes` may contain commas
-            // inside its single-quoted value.
             const firstComma = line.indexOf(',');
             const secondComma = line.indexOf(',', firstComma + 1);
             const lat = parseFloat(line.slice(0, firstComma));
             const lon = parseFloat(line.slice(firstComma + 1, secondComma));
-            let name = line.slice(secondComma + 1).trim();
-            if (name.startsWith("'") && name.endsWith("'")) {
-                name = name.slice(1, -1);
+            const rest = line.slice(secondComma + 1);
+            let name;
+            if (rest.startsWith("'")) {
+                // Quoted notes — read up to the closing single quote.
+                const closing = rest.indexOf("'", 1);
+                name = closing === -1 ? rest.slice(1) : rest.slice(1, closing);
+            } else {
+                // Unquoted notes — read up to the next comma (or end of line).
+                const nextComma = rest.indexOf(',');
+                name = nextComma === -1 ? rest : rest.slice(0, nextComma);
             }
-            return { lat, lon, name };
+            return { lat, lon, name: name.trim() };
         });
     }
 
@@ -335,15 +332,14 @@
     })();
 
     // Instructions for local development
-    console.log('🌲 Redwood Habitat Suitability Map (v0)');
+    console.log('🌲 Redwood Habitat Suitability Map');
     console.log('');
     console.log('To view tiles locally:');
     console.log('1. cd /home/adrian/redwoods/web');
     console.log('2. python -m http.server 8000');
     console.log('3. Open http://localhost:8000/');
     console.log('');
-    console.log('Note: v0 uses nighttime-only fog detection');
-    console.log('See Ticket #22 for daytime fog enhancement');
+    console.log('Fog input: GOES-18 Ch2 albedo > 0.25 at 17-21 UTC (10 AM - 2 PM PDT)');
 
 </script>
 

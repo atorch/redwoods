@@ -10,8 +10,8 @@ This script:
 Tiles are 256x256 PNG images with transparency for non-suitable areas
 and green fill for suitable redwood habitat.
 
-IMPORTANT: Input suitability layer uses nighttime-only GOES-16 fog detection.
-See Ticket #22 for future daytime fog detection enhancement.
+Input suitability layer uses GOES-18 daytime fog detection (10 AM – 2 PM PDT,
+albedo > 0.25) — ticket 22 / scripts 18 + 19.
 """
 
 import os
@@ -108,7 +108,7 @@ def convert_to_cog():
                 )
 
                 # Set band description
-                dst.set_band_description(1, "Redwood suitable habitat (nighttime fog)")
+                dst.set_band_description(1, "Redwood suitable habitat (daytime fog 10 AM – 2 PM PDT, GOES-18)")
 
             # Now convert to COG
             print("Creating Cloud Optimized GeoTIFF...")
@@ -281,9 +281,8 @@ def main():
     print("Generating browser-ready map tiles for the redwood habitat")
     print("suitability layer (study-area extent).")
     print()
-    print("IMPORTANT: Input uses nighttime-only GOES-16 fog detection")
-    print("           (06-12 UTC = 11pm-5am PST)")
-    print("           Future enhancement: daytime fog (Ticket #22)")
+    print("Input uses GOES-18 daytime fog detection")
+    print("  (Ch2 albedo > 0.30 at 19-21 UTC = 12-15 PDT)")
     print()
 
     # Step 1: Convert to COG

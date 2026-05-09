@@ -7,8 +7,8 @@ scripts/suitability.py — this script is just plumbing: load the three binary
 masks, call `suitability.combine`, write the result, validate at the ground
 truth points, print stats.
 
-v0 fog limitation: `study_area_fog_80days_goes16.tif` is built from
-nighttime-only BTD (11pm–5am PST); daytime fog detection is Ticket #22.
+Fog input is the daytime ("fog past noon") layer from GOES-18 Ch2 albedo
+(see scripts/18 + scripts/19, ticket 22).
 """
 
 from pathlib import Path
@@ -22,8 +22,9 @@ import suitability
 
 OUTPUT_DIR = Path("outputs")
 RAINFALL_FILE = OUTPUT_DIR / "study_area_rainfall_20in.tif"
-FOG_FILE = OUTPUT_DIR / "study_area_fog_80days_goes16.tif"
+FOG_FILE = OUTPUT_DIR / "study_area_fog_threshold_daytime.tif"
 LAND_FILE = OUTPUT_DIR / "study_area_land_mask.tif"
+TEMPERATURE_FILE = OUTPUT_DIR / "study_area_temperature_mask.tif"
 OUTPUT_FILE = OUTPUT_DIR / "study_area_redwood_suitable.tif"
 GROUND_TRUTH_FILE = Path("web/ground_truth_points.csv")
 
@@ -44,9 +45,10 @@ def combine_layers():
     rain, meta = load_mask(RAINFALL_FILE, "rain")
     fog, _ = load_mask(FOG_FILE, "fog")
     land, _ = load_mask(LAND_FILE, "land")
+    temp, _ = load_mask(TEMPERATURE_FILE, "temp")
 
-    print("\nApplying rule: rain AND fog AND land (scripts/suitability.py)...")
-    combined = suitability.combine(rain, fog, land)
+    print("\nApplying rule: rain AND fog AND land AND temperate (scripts/suitability.py)...")
+    combined = suitability.combine(rain, fog, land, temp)
 
     total = int((combined != suitability.NODATA).sum())
     suit = int((combined == 1).sum())
@@ -110,7 +112,7 @@ def generate_summary_stats(suitable):
 
     with rasterio.open(OUTPUT_DIR / "study_area_rainfall_total.tif") as src:
         rainfall_total = src.read(1)
-    with rasterio.open(OUTPUT_DIR / "study_area_fog_days_goes16.tif") as src:
+    with rasterio.open(OUTPUT_DIR / "study_area_fog_days_daytime.tif") as src:
         fog_days = src.read(1)
 
     suitable_mask = suitable == 1
@@ -136,6 +138,10 @@ def main():
     print(f"  Rainfall threshold: >= {suitability.RAINFALL_THRESHOLD_INCHES} inches (Nov–Apr)")
     print(f"  Fog threshold:      >= {suitability.FOG_DAYS_THRESHOLD} days (dry season)")
     print(f"  Land mask:          USDA CDL (water/wetland excluded)")
+    print(
+        f"  Temperature:        coldest-month tmin >= {suitability.COLDEST_MONTH_TMIN_FLOOR_C} °C "
+        f"AND hottest-month tmax <= {suitability.HOTTEST_MONTH_TMAX_CEILING_C} °C"
+    )
     print()
 
     suitable, transform, _ = combine_layers()

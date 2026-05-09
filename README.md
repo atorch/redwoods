@@ -73,19 +73,16 @@ uv run --with rasterio --with pandas --with shapely python scripts/<script_name>
 **Data verification:**
 - `scripts/check_prism_precipitation.py` - Sanity check PRISM precipitation data at Oakland, CA
 
-**Prototype pipeline (Ticket #00) - COMPLETED:**
-- `scripts/01_process_study_area_rainfall.py` - Process PRISM wet season rainfall, create 20" threshold layer ✓
-- `scripts/04_combine_suitability.py` - Combine rainfall + fog into final suitability layer ✓
+**Active pipeline:**
+- `scripts/01_process_study_area_rainfall.py` — PRISM wet-season rainfall, ≥ 20" mask
+- `scripts/17_build_land_mask.py` — water/wetland exclusion from USDA CDL
+- `scripts/18_download_daytime_goes18.py` — fetch GOES-18 Ch2 (visible) for 19–21 UTC, subset on download
+- `scripts/19_create_daytime_fog_layer.py` — albedo > 0.30 → "fog past noon" days/season
+- `scripts/04_combine_suitability.py` — rain ∧ fog ∧ land → suitability raster
+- `scripts/13_generate_web_tiles.py` — bake the raster into web map tiles
 
-**Real GOES-16 fog processing (in progress):**
-- `scripts/05_download_process_goes16_sample.py` - Download 3-day GOES-16 sample (minimal disk usage)
-- `scripts/06_process_goes16_btd.py` - Calculate BTD and detect fog from satellite data
-- `scripts/07_test_btd_with_sample.py` - Test BTD with existing sample file
-- Note: Requires AWS CLI or goes2go library for S3 access
-
-**GOES-16 utilities:**
-- `scripts/download_goes16_fog_data.py` - Example GOES-16 download script
-- `scripts/02_download_goes16_sample_days.py` - Alternative download approach
+Earlier numbered scripts (`02_*`–`16_*`) are superseded experiments using GOES-16
+nighttime BTD; preserved in git history but no longer part of the pipeline.
 
 ## Data Sources
 
@@ -102,8 +99,8 @@ uv run --with rasterio --with pandas --with shapely python scripts/<script_name>
 
 Core environmental data needed:
 1. **Fog/coastal moisture**:
-   - GOES-16 satellite data (NOAA) - afternoon fog persistence
-   - High temporal resolution for "fog past noon" analysis
+   - GOES-18 ABI Channel 2 (0.64 µm visible) — daytime "fog past noon"
+     via albedo > 0.30 (Rastogi et al. 2016)
 2. **Climate**:
    - PRISM monthly precipitation data - wet season (Nov-Apr) totals
 3. **Geography**:
