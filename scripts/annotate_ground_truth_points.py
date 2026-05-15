@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Annotate web/ground_truth_points.csv (in place) with sampled values from the
-suitability inputs.
+Annotate web/ground_truth_points.csv and web/negative_points.csv (in place)
+with sampled values from the suitability inputs.
 
 Adds columns:
   rainfall_inches    — wet-season total (PRISM, study_area_rainfall_total.tif)
@@ -17,7 +17,8 @@ Adds columns:
 
 Suitability is computed point-by-point from the raster values, using the same
 constants the pipeline uses — so the column should agree with the binary
-study_area_redwood_suitable.tif at each ground truth pixel.
+study_area_redwood_suitable.tif at each pixel. Negative points are off-range
+controls (Central Valley, Mt Shasta, etc.) and should annotate as is_suitable=0.
 
 Run:
   uv run python scripts/annotate_ground_truth_points.py
@@ -39,7 +40,8 @@ from suitability import (
 )
 
 ROOT = Path(__file__).resolve().parent.parent
-CSV_FILE = ROOT / "web" / "ground_truth_points.csv"
+POSITIVES_CSV = ROOT / "web" / "ground_truth_points.csv"
+NEGATIVES_CSV = ROOT / "web" / "negative_points.csv"
 RAINFALL_FILE = ROOT / "outputs" / "study_area_rainfall_total.tif"
 FOG_FILE = ROOT / "outputs" / "study_area_fog_days_daytime.tif"
 LAND_FILE = ROOT / "outputs" / "study_area_land_mask.tif"
@@ -62,9 +64,9 @@ def sample(path, coords):
     return out
 
 
-def main():
-    df = pd.read_csv(CSV_FILE, quotechar="'")
-    print(f"Loaded {len(df)} points from {CSV_FILE.relative_to(ROOT)}")
+def annotate(csv_path, label):
+    df = pd.read_csv(csv_path, quotechar="'")
+    print(f"Loaded {len(df)} {label} from {csv_path.relative_to(ROOT)}")
 
     coords = list(zip(df["longitude"], df["latitude"]))
     rain = sample(RAINFALL_FILE, coords)
@@ -90,9 +92,15 @@ def main():
         for r, f, l, c, h in zip(rain, fog, land, coldest, hottest)
     ]
 
-    df.to_csv(CSV_FILE, index=False, quotechar="'", quoting=csv.QUOTE_MINIMAL)
-    print(f"Wrote annotated CSV in place: {CSV_FILE.relative_to(ROOT)}")
+    df.to_csv(csv_path, index=False, quotechar="'", quoting=csv.QUOTE_MINIMAL)
+    print(f"Wrote annotated CSV in place: {csv_path.relative_to(ROOT)}")
     print()
+    print(df.to_string(index=False))
+    print()
+    return df
+
+
+def main():
     print(
         f"Thresholds: rain ≥ {RAINFALL_THRESHOLD_INCHES} in, "
         f"fog ≥ {FOG_DAYS_THRESHOLD} days, "
@@ -100,7 +108,8 @@ def main():
         f"hottest tmax ≤ {HOTTEST_MONTH_TMAX_CEILING_C} °C"
     )
     print()
-    print(df.to_string(index=False))
+    annotate(POSITIVES_CSV, "positive ground-truth points")
+    annotate(NEGATIVES_CSV, "negative control points")
 
 
 if __name__ == "__main__":

@@ -223,6 +223,12 @@ data/**/*cpg
 
 data/**/*nc
 
+# ESRI Arc/Info Binary Grid components (e.g. Torregrosa decadal FLCC rasters)
+data/**/*adf
+data/**/*dat
+data/**/*nit
+data/**/__MACOSX/
+
 data/*~
 
 # Web tiles (regenerate with scripts/13_generate_web_tiles.py).

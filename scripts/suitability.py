@@ -23,8 +23,8 @@ import numpy as np
 # Wet-season (Nov–Apr) precipitation total, from PRISM 30-year normals.
 RAINFALL_THRESHOLD_INCHES = 20.0
 
-# Dry-season days with marine-layer cloud overhead at any point in 17–21 UTC
-# (10 AM – 2 PM PDT), from GOES-18 Ch2 albedo > 0.25. Broader than the original
+# Dry-season days with marine-layer cloud overhead at any point in 15–21 UTC
+# (8 AM – 2 PM PDT), from GOES-18 Ch2 albedo > 0.25. Broader than the original
 # "fog past noon" station heuristic — satellite midday-only severely under-
 # detects inland canyon redwood sites that depend on morning fog. Threshold
 # tuned against ground truth points.

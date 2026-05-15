@@ -3,9 +3,11 @@
 Download GOES-18 ABI Channel 2 (visible, 0.64 µm) for daytime fog detection.
 
 Per ticket 22 (Option A — Rastogi 2016 albedo threshold):
-- 17/18/19/20/21 UTC (10 AM – 2 PM PDT) — late morning marine layer through
-  early afternoon. Captures fog that touches the canopy at sites where the
-  midday marine layer has burnt back from canyons.
+- 15/16/17/18/19/20/21 UTC (8 AM – 2 PM PDT) — morning marine layer through
+  early afternoon. Ticket 33 extended the window earlier from a 17 UTC start
+  because Torregrosa et al. 2016 found inland-incursion FLCC "often dissipates
+  earlier than 10:30 A.M.", so a 10 AM start under-detects deep canyon sites
+  (Eel/Russian River valleys) that depend on morning marine layer.
 - 6 weeks per dry season (May / June / mid-July / late-July / Aug / Sept),
   7 days each, 2023-2025. July is the climatological peak coastal-fog month.
 - 2 scans/hour = 10 scans/day × 42 days/year × 3 years = 1260 files.
@@ -43,7 +45,7 @@ WEEKS = [
     {"name": "August (mid fog season)",      "start_doy": 225, "end_doy": 231, "num_days": 7},
     {"name": "September (late dry season)",  "start_doy": 260, "end_doy": 266, "num_days": 7},
 ]
-DAYTIME_HOURS = [17, 18, 19, 20, 21]
+DAYTIME_HOURS = [15, 16, 17, 18, 19, 20, 21]
 CHANNEL = 2
 SCANS_PER_HOUR = 2
 

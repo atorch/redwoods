@@ -3,9 +3,11 @@
 Create the daytime fog layer from GOES-18 ABI Channel 2 subsets.
 
 Method (Ticket 22 Option A — Rastogi et al. 2016, threshold tuned vs ground truth):
-  1. For each scan in 17–21 UTC (10 AM – 2 PM PDT), threshold the Ch2
-     reflectance: albedo > 0.25 ⇒ low cloud / fog. Window covers late-morning
-     marine layer through early-afternoon burnoff.
+  1. For each scan in 15–21 UTC (8 AM – 2 PM PDT), threshold the Ch2
+     reflectance: albedo > 0.25 ⇒ low cloud / fog. Window covers morning
+     marine layer through early-afternoon burnoff. Ticket 33 extended the
+     start back from 17 UTC after Torregrosa et al. 2016 showed inland
+     incursion FLCC often clears before 10:30 AM PDT.
   2. A "daytime fog day" at a pixel = any in-window scan that day classifies
      low cloud at that pixel.
   3. Aggregate sample-period fog days; extrapolate to the 184-day dry season.
