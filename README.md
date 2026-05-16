@@ -36,7 +36,7 @@ Create an interactive web-based map showing:
 
 **Key insight**: Layer 2 represents both historical range (ca. 1750, pre-settlement) and hypothetical suitable habitat today. The same environmental criteria apply: if conditions support redwoods naturally, they likely existed there historically and could exist there today absent urban development and invasive species.
 
-Focus area: California Bay Area and Pacific coast (north of San Simeon)
+Focus area: California Bay Area and Pacific coast
 
 ## Technology Stack (Draft)
 
@@ -75,14 +75,18 @@ uv run --with rasterio --with pandas --with shapely python scripts/<script_name>
 
 **Active pipeline:**
 - `scripts/01_process_study_area_rainfall.py` — PRISM wet-season rainfall, ≥ 20" mask
+- `scripts/16_download_multiyear_goes16.py` — fetch GOES-16 Ch7/Ch13 for 06–12 UTC, 4 weeks × 5 years
+- `scripts/11_create_real_fog_layer.py` — nighttime BTD (Ch13−Ch7) → fog-nights/season
 - `scripts/17_build_land_mask.py` — water/wetland exclusion from USDA CDL
-- `scripts/18_download_daytime_goes18.py` — fetch GOES-18 Ch2 (visible) for 19–21 UTC, subset on download
-- `scripts/19_create_daytime_fog_layer.py` — albedo > 0.30 → "fog past noon" days/season
-- `scripts/04_combine_suitability.py` — rain ∧ fog ∧ land → suitability raster
+- `scripts/build_temperature_masks.py` — PRISM tmin/tmax → maritime temperature envelope
+- `scripts/04_combine_suitability.py` — rain ∧ fog ∧ land ∧ temperate → suitability raster
 - `scripts/13_generate_web_tiles.py` — bake the raster into web map tiles
 
-Earlier numbered scripts (`02_*`–`16_*`) are superseded experiments using GOES-16
-nighttime BTD; preserved in git history but no longer part of the pipeline.
+`scripts/18_download_daytime_goes18.py` + `scripts/19_create_daytime_fog_layer.py`
+build the daytime GOES-18 fog layer, kept around as a diagnostic
+(`scripts/annotate_ground_truth_points.py` samples it for comparison) but no
+longer the live fog input. Other earlier numbered scripts (`02_*`–`15_*`) are
+superseded experiments preserved in git history.
 
 ## Data Sources
 
@@ -99,12 +103,16 @@ nighttime BTD; preserved in git history but no longer part of the pipeline.
 
 Core environmental data needed:
 1. **Fog/coastal moisture**:
-   - GOES-18 ABI Channel 2 (0.64 µm visible) — daytime "fog past noon"
-     via albedo > 0.30 (Rastogi et al. 2016)
+   - GOES-16 ABI Channels 7 (3.9 µm) and 13 (10.3 µm) — nighttime
+     brightness-temperature difference (Ch13−Ch7) flags low water cloud
+     (NESDIS nighttime fog/low-cloud detection method); aggregated to
+     fog-nights/season over a 4-week × 5-year (2020–2024) sample
 2. **Climate**:
-   - PRISM monthly precipitation data - wet season (Nov-Apr) totals
-3. **Geography**:
-   - Latitude filter: north of San Simeon (~35.6°N)
+   - PRISM monthly precipitation data — wet-season (Nov–Apr) totals
+   - PRISM monthly tmin/tmax normals — coldest-month / hottest-month
+     maritime envelope (rejects cold Cascade interior, hot Central Valley)
+3. **Land cover**:
+   - USDA Cropland Data Layer — drop open-water and wetland pixels
 
 **Optional refinements** (future work):
 - Topography: USGS 3DEP DEM → slope, aspect, topographic wetness index
@@ -123,13 +131,15 @@ Academic heuristic for identifying historical (pre-settlement) redwood presence:
 > "If the place is north of San Simeon, fog currently lasts past noon 80 days/dry season,
 > and the place has more than 20 inches/year of rain in the wet season, it had redwoods in 1750."
 
+The original heuristic uses latitude as a coarse proxy for the cold-interior /
+hot-Central-Valley boundary. In implementation we dropped the latitude filter
+in favor of a maritime temperature envelope (PRISM tmin/tmax) plus a land mask
+(USDA CDL) — more principled, and they reject the same false-positives that the
+35.6°N cut was meant to catch.
+
 ### Data Requirements for This Heuristic
 
-1. **Geographic boundary**: North of San Simeon
-   - **Status**: ✓ Straightforward geographic filter
-   - **Implementation**: Latitude threshold (~35.6°N)
-
-2. **Fog persistence**: Fog lasts past noon 80+ days during dry season (May-Oct)
+1. **Fog persistence**: Fog lasts past noon 80+ days during dry season (May-Oct)
    - **Status**: ⚠️ **CRITICAL DATA GAP** - need time-of-day + seasonal data
    - **Current plan**: MODIS cloud frequency, relative humidity (insufficient)
    - **Gap**: Need time-of-day specificity (past noon) and seasonal aggregation
@@ -148,7 +158,7 @@ Academic heuristic for identifying historical (pre-settlement) redwood presence:
      - Create raster: "average days/year with afternoon fog" or monthly breakdowns
    - **Question**: Monthly averages likely sufficient vs. daily rasters
 
-3. **Wet season precipitation**: 20+ inches during wet season (Nov-Apr)
+2. **Wet season precipitation**: 20+ inches during wet season (Nov-Apr)
    - **Status**: ✓ Covered by PRISM
    - **Current plan**: PRISM monthly precipitation normals
    - **Implementation**: Aggregate Nov-Apr months, create 20" threshold layer

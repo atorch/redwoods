@@ -3,12 +3,12 @@
 Combine rainfall, fog, and land layers into the final redwood suitability layer.
 
 The rule itself (sufficient rain AND sufficient fog AND on land) lives in
-scripts/suitability.py — this script is just plumbing: load the three binary
-masks, call `suitability.combine`, write the result, validate at the ground
-truth points, print stats.
+scripts/suitability.py — this script is just plumbing: load the masks, threshold
+the continuous fog raster at FOG_DAYS_THRESHOLD, call `suitability.combine`,
+write the result, validate at the ground truth points, print stats.
 
-Fog input is the daytime ("fog past noon") layer from GOES-18 Ch2 albedo
-(see scripts/18 + scripts/19, ticket 22).
+Fog input is the GOES-16 nighttime BTD layer (Ch13−Ch7, 06–12 UTC,
+4 weeks × 5 years 2020–2024). See scripts/16 + scripts/11.
 """
 
 from pathlib import Path
@@ -22,7 +22,7 @@ import suitability
 
 OUTPUT_DIR = Path("outputs")
 RAINFALL_FILE = OUTPUT_DIR / "study_area_rainfall_20in.tif"
-FOG_FILE = OUTPUT_DIR / "study_area_fog_threshold_daytime.tif"
+FOG_CONTINUOUS_FILE = OUTPUT_DIR / "study_area_fog_days_goes16.tif"
 LAND_FILE = OUTPUT_DIR / "study_area_land_mask.tif"
 TEMPERATURE_FILE = OUTPUT_DIR / "study_area_temperature_mask.tif"
 OUTPUT_FILE = OUTPUT_DIR / "study_area_redwood_suitable.tif"
@@ -38,12 +38,30 @@ def load_mask(path, name):
     return arr, meta
 
 
+def load_fog_mask(path, threshold, name):
+    """Threshold the continuous fog-days raster at `threshold` to a binary mask
+    matching the {1, 0, 255=nodata} convention the rule expects."""
+    with rasterio.open(path) as src:
+        arr = src.read(1)
+        nodata = src.nodata
+        meta = src.meta.copy()
+    mask = (arr >= threshold).astype(np.uint8)
+    if nodata is not None:
+        mask[arr == nodata] = 255
+    ones = int((mask == 1).sum())
+    print(f"  {name:<8} shape={arr.shape}  1-pixels={ones:,}  "
+          f"(threshold >= {threshold} fog days)")
+    meta.update({"dtype": "uint8", "nodata": 255})
+    return mask, meta
+
+
 def combine_layers():
     print("Combining Suitability Layers")
     print("=" * 60)
 
     rain, meta = load_mask(RAINFALL_FILE, "rain")
-    fog, _ = load_mask(FOG_FILE, "fog")
+    fog, _ = load_fog_mask(FOG_CONTINUOUS_FILE,
+                           suitability.FOG_DAYS_THRESHOLD, "fog")
     land, _ = load_mask(LAND_FILE, "land")
     temp, _ = load_mask(TEMPERATURE_FILE, "temp")
 
@@ -112,7 +130,7 @@ def generate_summary_stats(suitable):
 
     with rasterio.open(OUTPUT_DIR / "study_area_rainfall_total.tif") as src:
         rainfall_total = src.read(1)
-    with rasterio.open(OUTPUT_DIR / "study_area_fog_days_daytime.tif") as src:
+    with rasterio.open(FOG_CONTINUOUS_FILE) as src:
         fog_days = src.read(1)
 
     suitable_mask = suitable == 1

@@ -9,10 +9,10 @@ The rule:
                AND is_temperate
 
 Inputs are binary uint8 rasters on the same grid: 1 = yes, 0 = no, 255 = nodata.
-Thresholds come from the academic heuristic ("north of San Simeon, >= 20 in of
-wet-season rain, >= 80 fog-days in the dry season"); the land mask drops ocean
-and inland water that would otherwise slip through; the temperature mask drops
-sites outside the maritime envelope (cold interior + hot Central Valley).
+Rain and fog thresholds start from the academic heuristic (~20 in of wet-season
+rain, ~80 dry-season fog days, north of San Simeon) and are then tuned against
+ground truth; the temperature and land masks replace the latitude filter,
+dropping the cold interior, the hot Central Valley, and open water / wetland.
 
 Any script that encodes the combined suitability rule should go through
 `combine(...)` here rather than re-expressing the AND inline.
@@ -23,11 +23,18 @@ import numpy as np
 # Wet-season (Nov–Apr) precipitation total, from PRISM 30-year normals.
 RAINFALL_THRESHOLD_INCHES = 20.0
 
-# Dry-season days with marine-layer cloud overhead at any point in 15–21 UTC
-# (8 AM – 2 PM PDT), from GOES-18 Ch2 albedo > 0.25. Broader than the original
-# "fog past noon" station heuristic — satellite midday-only severely under-
-# detects inland canyon redwood sites that depend on morning fog. Threshold
-# tuned against ground truth points.
+# Dry-season nights with low-cloud / marine-layer overhead, from GOES-16
+# Ch13−Ch7 BTD at 06–12 UTC (11 PM – 5 AM PST), 4-week × 5-year climatology
+# (2020–2024). Nighttime BTD separates the ground truth set much better than
+# the GOES-18 daytime albedo signal does — daytime under-detects inland canyon
+# redwood sites (Armstrong / Humboldt / Navarro) and false-positives Mt Shasta
+# on orographic high cloud + snow albedo. Fog alone doesn't cleanly separate
+# the classes at any threshold — Davis CA sits at ≈79 nights, above the
+# positives' floor (Limekiln ≈70). The 50-night threshold rejects the
+# never-foggy Central Valley sites while admitting every coastal positive;
+# the remaining overlap (Davis, Mt Shasta) is rejected by the rainfall and
+# temperature filters, not by fog. See the per-site separation table from
+# `scripts/annotate_ground_truth_points.py`.
 FOG_DAYS_THRESHOLD = 50
 
 # Temperature envelope, from PRISM monthly tmin/tmax 30-year normals (ticket 32).

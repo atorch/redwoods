@@ -96,16 +96,16 @@
 
         <h2>How it works</h2>
         <p>
-            We follow a simple heuristic: a place likely supported redwoods if it is north of San Simeon (~35.6°N), receives at least 20 inches of rain in the wet season, and has fog on at least 80 days of the dry season.
+            We follow a simple heuristic: a place likely supported redwoods if it receives at least 20 inches of rain in the wet season, stays inside the maritime temperature envelope, has marine-layer fog overhead on at least 50 nights of the dry season, and is on land rather than open water or wetland.
         </p>
         <ul>
             <li><strong>Rainfall</strong> — PRISM 800 m wet-season precipitation normals (Nov–Apr).</li>
-            <li><strong>Fog</strong> — GOES-18 satellite Channel 2 (visible, 0.64 µm). A scan classifies a pixel as low cloud / fog when reflectance &gt; 0.25 (close to the 0.30 ISCCP threshold used by <a href="https://journals.ametsoc.org/view/journals/eint/20/15/ei-d-15-0033.1.xml" target="_blank" rel="noopener">Rastogi et al. 2016</a>; tuned against ground truth). We sample four weeks per dry season (May / Jun / Aug / Sep) across 2023–2025 in the 17–21 UTC window — 10 AM – 2 PM PDT — covering late morning through early afternoon. A "fog day" is any day with at least one cloudy in-window scan; the count is extrapolated to the 184-day dry season.</li>
+            <li><strong>Fog</strong> — GOES-16 satellite Channels 7 (3.9 µm) and 13 (10.3 µm). At night, low water clouds emit much less in the shorter-wavelength channel than the longer one, producing a positive brightness-temperature difference (BTD) that uniquely identifies marine-layer fog — the standard <a href="https://cimss.ssec.wisc.edu/goes/OCLOFactSheetPDFs/ABIQuickGuide_NightFogBTD.pdf" target="_blank" rel="noopener">NESDIS nighttime fog detection method</a>. We sample four weeks per dry season (May / Jun / Aug / Sep) across 2020–2024 in the 06–12 UTC window — 11 PM – 5 AM PST — when BTD is uncontaminated by solar reflection. A "fog night" is any night with at least one in-window scan flagged as low cloud at that pixel; the count is extrapolated to the 184-day dry season and the 50-night threshold is tuned against ground truth.</li>
             <li><strong>Temperature</strong> — places where the coldest month averages below ~-3 °C or the hottest month averages above ~30 °C are excluded. Coast redwoods are a maritime species; per the <a href="https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_1/sequoia/sempervirens.htm" target="_blank" rel="noopener">USDA <em>Silvics of North America</em></a>, the native range sits between mean annuals of 10–16 °C with rare drops below -9 °C and rare highs above 38 °C. This filter rejects the cold Cascade / Klamath interior and the hot Central Valley. PRISM 30-year monthly tmin / tmax normals.</li>
-            <li><strong>Geographic filter</strong> — north of 35.6°N latitude.</li>
+            <li><strong>Land mask</strong> — open water and wetlands are dropped using the USDA Cropland Data Layer, so the suitability layer reflects land where redwoods could actually root rather than the pixels of bay and ocean a coastal raster necessarily includes.</li>
         </ul>
         <p>
-            Green pixels on the map are places that meet all three criteria. Red dots are ground-truth redwood locations used to sanity-check the model.
+            Green pixels on the map are places that meet all four criteria. Red dots are ground-truth redwood locations used to sanity-check the model.
         </p>
 
         <h2>Links</h2>
@@ -118,13 +118,16 @@
         </ul>
 
         <p class="footnote">
-            We sample fog "anytime in the 10 AM to early afternoon window" rather
-            than strictly past noon. The original station-based "fog past noon"
-            heuristic counts any fog event during the day; satellite midday-only
-            detection severely under-calls inland canyon redwood sites that depend
-            on morning marine layer that has burnt back from those canyons by 1 PM.
-            The wider window catches the late-morning extent without abandoning
-            the daytime intent.
+            Satellites see <em>cloud tops</em>, not whether cloud is actually
+            touching the canopy and dripping moisture onto the forest floor.
+            Nighttime marine-layer presence is a strong proxy for the morning
+            and daytime conditions that produce fog interception in coastal
+            canyons — coastal sites with frequent overnight fog overhead also
+            tend to have lingering canopy contact at dawn — but it is still a
+            proxy. We also evaluated a daytime visible-channel signal and
+            published MODIS / Torregrosa fog rasters; the nighttime BTD layer
+            cleanly separates the redwood ground-truth points from inland
+            control sites, while the other products do not.
         </p>
     </div>
 </body>

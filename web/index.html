@@ -20,9 +20,9 @@
     - When we add higher zooms we'll hit Cloudflare Pages' 20k-file cap; at
       that point move tiles to R2 (see tickets/24_deploy_tiles_cloudflare_r2.md).
 
-    Fog input: GOES-18 Ch2 albedo > 0.25 at 17-21 UTC (10 AM - 2 PM PDT) —
-    marine-layer cloud overhead at any point in late morning through early
-    afternoon (Rastogi et al. 2016, ticket 22).
+    Fog input: GOES-16 Ch13−Ch7 BTD at 06–12 UTC (11 PM – 5 AM PST), 4-week
+    × 5-year climatology (2020–2024). Nighttime marine-layer overhead; the
+    standard NESDIS nighttime fog/low-cloud detection method.
 -->
 <html lang="en">
 <head>
@@ -177,14 +177,15 @@
         <p>Green areas show where redwoods could naturally grow based on:</p>
         <ul style="margin: 10px 0; padding-left: 20px; font-size: 13px;">
             <li>Wet season rainfall ≥ 20 inches (PRISM)</li>
-            <li>Marine-layer cloud overhead ≥ 50 days/season<br>(GOES-18, 10 AM – 2 PM PDT)</li>
-            <li>North of San Simeon (35.6°N)</li>
+            <li>Marine-layer fog overhead ≥ 50 nights/season<br>(GOES-16 nighttime BTD)</li>
+            <li>Maritime temperature envelope (PRISM)</li>
+            <li>On land (not open water / wetland)</li>
         </ul>
         <p class="note">
             <strong>Data Sources:</strong><br>
             • Rainfall: PRISM 800m normals<br>
-            • Fog: GOES-18 Ch2 albedo > 0.25 at 17–21 UTC (10 AM – 2 PM PDT)<br>
-            • Time Period: 2023–2025 dry seasons (May/Jun/Aug/Sep weeks)<br>
+            • Fog: GOES-16 Ch13−Ch7 BTD at 06–12 UTC (11 PM – 5 AM PST)<br>
+            • Time Period: 2020–2024 dry seasons (May/Jun/Aug/Sep weeks)<br>
             • Resolution: 800m
         </p>
         <p class="note" style="text-align: right;">
@@ -243,7 +244,7 @@
         minNativeZoom: 8,
         maxNativeZoom: 8,
         opacity: 0.7,
-        attribution: 'Suitability: PRISM + GOES-18 (10 AM – 2 PM PDT fog)'
+        attribution: 'Suitability: PRISM + GOES-16 (nighttime marine-layer fog)'
     }).addTo(map);
 
     // Ground truth points
@@ -339,7 +340,7 @@
     console.log('2. python -m http.server 8000');
     console.log('3. Open http://localhost:8000/');
     console.log('');
-    console.log('Fog input: GOES-18 Ch2 albedo > 0.25 at 17-21 UTC (10 AM - 2 PM PDT)');
+    console.log('Fog input: GOES-16 Ch13−Ch7 BTD at 06-12 UTC (11 PM - 5 AM PST), 2020-2024');
 
 </script>
 

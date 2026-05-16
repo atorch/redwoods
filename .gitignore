@@ -239,3 +239,6 @@ data/*~
 web/tiles/
 
 data/goes16_multiyear/*
+
+# Reference papers (kept locally for reading; not committed).
+*.pdf
