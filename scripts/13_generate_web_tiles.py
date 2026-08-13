@@ -8,7 +8,7 @@ This script:
 3. Saves tiles in standard XYZ directory structure for web serving
 
 Tiles are 256x256 PNG images with transparency for non-suitable areas
-and green fill for suitable redwood habitat.
+and goldenrod fill for suitable redwood habitat.
 
 Input suitability layer uses GOES-16 nighttime BTD fog detection (06–12 UTC,
 4 weeks × 5 years 2020–2024) — scripts 16 + 11.
@@ -49,8 +49,11 @@ MAX_ZOOM = 8
 # Tile size (standard)
 TILE_SIZE = 256
 
-# Color scheme for suitability (green for suitable habitat)
-SUITABLE_COLOR = (34, 139, 34, 204)  # Green with 80% opacity (RGB: #228B22)
+# Color scheme for suitability. Goldenrod, not green: the ground-truth
+# markers now reuse the favicon's tree glyph (also green), and green-on-green
+# was hard to pick out at a glance. Amber (#E8A33D) was the runner-up if this
+# needs revisiting.
+SUITABLE_COLOR = (218, 165, 32, 204)  # Goldenrod with 80% opacity (RGB: #DAA520)
 NOT_SUITABLE_COLOR = (0, 0, 0, 0)     # Transparent
 NODATA_COLOR = (0, 0, 0, 0)           # Transparent
 
@@ -145,7 +148,7 @@ def raster_to_rgba(data, nodata_value=255):
     # Create RGBA array
     rgba = np.zeros((data.shape[0], data.shape[1], 4), dtype=np.uint8)
 
-    # Suitable pixels (value = 1) → green
+    # Suitable pixels (value = 1) → SUITABLE_COLOR
     suitable_mask = (data == 1)
     rgba[suitable_mask] = SUITABLE_COLOR
 
@@ -309,8 +312,8 @@ def main():
     print("   http://localhost:8000/")
     print()
     print("3. What you'll see:")
-    print("   - Green overlay: Suitable habitat")
-    print("   - Red markers: 4 validated ground truth points")
+    print("   - Goldenrod overlay: Suitable habitat")
+    print("   - Tree markers: validated ground truth points")
     print("   - Layer control: Toggle visibility in top-left")
     print()
     print("TROUBLESHOOTING:")

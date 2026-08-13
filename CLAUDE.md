@@ -28,12 +28,12 @@ python3 -m http.server 8000
 uv run python scripts/13_generate_web_tiles.py
 ```
 
-Tiles land in `web/tiles/redwood_suitability/` (git-ignored). Only a bootstrap subset (the 12 zoom-8 tiles) is hosted in production today — see the tile allowlist (`AVAILABLE_TILES`) in `web/index.html`.
+Tiles land in `web/tiles/redwood_suitability/` (git-ignored). Only a bootstrap subset (the 24 zoom-8 tiles) is hosted in production today — see the tile allowlist (`AVAILABLE_TILES`) in `web/index.html`.
 
 ## Deployment
 
 - `web/` is uploaded as static content to **Cloudflare Pages** — the whole directory (HTML + tiles) ships as one unit. Don't put anything in here that shouldn't be public.
-- **Bootstrap tile hosting**: we ship only the 12 zoom-8 tiles so we stay well under Pages' 20k-file limit. `web/index.html` uses `maxNativeZoom: 8` to stretch them at higher zooms and an allowlist that returns a transparent PNG for any tile coord we haven't shipped (avoiding 404s).
+- **Bootstrap tile hosting**: we ship only the 24 zoom-8 tiles so we stay well under Pages' 20k-file limit. `web/index.html` uses `maxNativeZoom: 8` to stretch them at higher zooms and an allowlist that returns a transparent PNG for any tile coord we haven't shipped (avoiding 404s).
 - **Future scale-up**: once we want to ship higher zoom levels (z=9+ adds ~30k more tiles), we'll exceed the Pages file cap and move tiles to **Cloudflare R2**. See `tickets/24_deploy_tiles_cloudflare_r2.md` (deferred) and `tickets/26_automate_cloudflare_deploy.md` (scripted deploy skeleton).
 
 ## Key paths

@@ -229,6 +229,10 @@ data/**/*dat
 data/**/*nit
 data/**/__MACOSX/
 
+# ESRI BIL components (e.g. USDA PHZM grid, ticket 36)
+data/**/*bil
+data/**/*hdr
+
 data/*~
 
 # Web tiles (regenerate with scripts/13_generate_web_tiles.py).

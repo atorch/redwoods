@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About — Northern California Coastal Redwood Habitat Suitability</title>
+
+    <link rel="icon" href="./favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+
     <style>
         body {
             margin: 0;
@@ -24,6 +30,13 @@
             color: #2c5530;
             font-size: 26px;
             margin: 0 0 8px;
+        }
+
+        .header-tree-icon {
+            width: 26px;
+            height: 26px;
+            vertical-align: -5px;
+            margin-right: 4px;
         }
 
         h2 {
@@ -80,7 +93,7 @@
     <div class="container">
         <a class="back-link" href="./">← Back to map</a>
 
-        <h1>🌲 About this map</h1>
+        <h1><img src="./apple-touch-icon.png" alt="" class="header-tree-icon">About this map</h1>
         <p class="lede">An interactive map of where coastal redwoods <em>could</em> grow along the Northern California coast — based on fog and rainfall.</p>
 
         <h2>What question is this answering?</h2>
@@ -96,16 +109,20 @@
 
         <h2>How it works</h2>
         <p>
-            We follow a simple heuristic: a place likely supported redwoods if it receives at least 20 inches of rain in the wet season, stays inside the maritime temperature envelope, has marine-layer fog overhead on at least 50 nights of the dry season, and is on land rather than open water or wetland.
+            We follow a simple heuristic: a place likely supported redwoods if it receives at least 20 inches of rain in the wet season, stays inside the maritime temperature envelope, doesn't see hard winter freezes in a typical year, has marine-layer fog overhead on at least 50 nights of the dry season, and is on land rather than open water or wetland.
         </p>
         <ul>
             <li><strong>Rainfall</strong> — PRISM 800 m wet-season precipitation normals (Nov–Apr).</li>
             <li><strong>Fog</strong> — GOES-16 satellite Channels 7 (3.9 µm) and 13 (10.3 µm). At night, low water clouds emit much less in the shorter-wavelength channel than the longer one, producing a positive brightness-temperature difference (BTD) that uniquely identifies marine-layer fog — the standard <a href="https://cimss.ssec.wisc.edu/goes/OCLOFactSheetPDFs/ABIQuickGuide_NightFogBTD.pdf" target="_blank" rel="noopener">NESDIS nighttime fog detection method</a>. We sample four weeks per dry season (May / Jun / Aug / Sep) across 2020–2024 in the 06–12 UTC window — 11 PM – 5 AM PST — when BTD is uncontaminated by solar reflection. A "fog night" is any night with at least one in-window scan flagged as low cloud at that pixel; the count is extrapolated to the 184-day dry season and the 50-night threshold is tuned against ground truth.</li>
             <li><strong>Temperature</strong> — places where the coldest month averages below ~-3 °C or the hottest month averages above ~30 °C are excluded. Coast redwoods are a maritime species; per the <a href="https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_1/sequoia/sempervirens.htm" target="_blank" rel="noopener">USDA <em>Silvics of North America</em></a>, the native range sits between mean annuals of 10–16 °C with rare drops below -9 °C and rare highs above 38 °C. This filter rejects the cold Cascade / Klamath interior and the hot Central Valley. PRISM 30-year monthly tmin / tmax normals.</li>
+            <li><strong>Frost hardiness</strong> — mean January tmin can look mild even where occasional Arctic outbreaks reach far colder, since a monthly normal is an average, not a worst case. We add the USDA Plant Hardiness Zone Map's average annual extreme minimum temperature (the mean, across 1991–2020, of each year's single coldest night) and exclude places colder than -5 °C by that measure — a proxy for "do hard freezes happen here?" that a monthly mean can't capture. This mainly matters at the northern end of the range, in Oregon.</li>
             <li><strong>Land mask</strong> — open water and wetlands are dropped using the USDA Cropland Data Layer, so the suitability layer reflects land where redwoods could actually root rather than the pixels of bay and ocean a coastal raster necessarily includes.</li>
         </ul>
         <p>
-            Green pixels on the map are places that meet all four criteria. Red dots are ground-truth redwood locations used to sanity-check the model.
+            Gold pixels on the map are places that meet all five criteria. Tree markers are ground-truth redwood locations used to sanity-check the model.
+        </p>
+        <p>
+            The suitable area extends a bit past the documented native range into southern Oregon — the biological range edge (the Chetco River drainage near Brookings) sits about 10 km inside Oregon, past the state-line cutoff drawn on most range maps. Further north, coast redwoods don't occupy the coast even where our climate-only criteria pass, partly because the marine fog regime weakens past Cape Blanco, partly because occasional severe winter freezes there test the edge of what redwood seedlings tolerate, and partly because faster-growing competitors (Sitka spruce, western hemlock) already hold that niche — biotic competition our rule doesn't model. Read this map as <em>where redwoods could persist climatically</em>, not a claim about where they grow today.
         </p>
 
         <h2>Links</h2>

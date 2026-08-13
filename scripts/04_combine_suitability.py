@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-Combine rainfall, fog, and land layers into the final redwood suitability layer.
+Combine rainfall, fog, land, temperature, and frost-hardiness layers into the
+final redwood suitability layer.
 
-The rule itself (sufficient rain AND sufficient fog AND on land) lives in
-scripts/suitability.py — this script is just plumbing: load the masks, threshold
-the continuous fog raster at FOG_DAYS_THRESHOLD, call `suitability.combine`,
-write the result, validate at the ground truth points, print stats.
+The rule itself lives in scripts/suitability.py — this script is just
+plumbing: load the masks, threshold the continuous fog raster at
+FOG_DAYS_THRESHOLD, call `suitability.combine`, write the result, validate at
+the ground truth points, print stats.
 
 Fog input is the GOES-16 nighttime BTD layer (Ch13−Ch7, 06–12 UTC,
 4 weeks × 5 years 2020–2024). See scripts/16 + scripts/11.
@@ -25,6 +26,7 @@ RAINFALL_FILE = OUTPUT_DIR / "study_area_rainfall_20in.tif"
 FOG_CONTINUOUS_FILE = OUTPUT_DIR / "study_area_fog_days_goes16.tif"
 LAND_FILE = OUTPUT_DIR / "study_area_land_mask.tif"
 TEMPERATURE_FILE = OUTPUT_DIR / "study_area_temperature_mask.tif"
+PHZM_FILE = OUTPUT_DIR / "study_area_phzm_mask.tif"
 OUTPUT_FILE = OUTPUT_DIR / "study_area_redwood_suitable.tif"
 GROUND_TRUTH_FILE = Path("web/ground_truth_points.csv")
 
@@ -64,9 +66,11 @@ def combine_layers():
                            suitability.FOG_DAYS_THRESHOLD, "fog")
     land, _ = load_mask(LAND_FILE, "land")
     temp, _ = load_mask(TEMPERATURE_FILE, "temp")
+    phzm, _ = load_mask(PHZM_FILE, "phzm")
 
-    print("\nApplying rule: rain AND fog AND land AND temperate (scripts/suitability.py)...")
-    combined = suitability.combine(rain, fog, land, temp)
+    print("\nApplying rule: rain AND fog AND land AND temperate AND frost-hardy "
+          "(scripts/suitability.py)...")
+    combined = suitability.combine(rain, fog, land, temp, phzm)
 
     total = int((combined != suitability.NODATA).sum())
     suit = int((combined == 1).sum())
@@ -159,6 +163,10 @@ def main():
     print(
         f"  Temperature:        coldest-month tmin >= {suitability.COLDEST_MONTH_TMIN_FLOOR_C} °C "
         f"AND hottest-month tmax <= {suitability.HOTTEST_MONTH_TMAX_CEILING_C} °C"
+    )
+    print(
+        f"  Frost hardiness:    avg annual extreme min (PHZM) >= "
+        f"{suitability.PHZM_EXTREME_MIN_FLOOR_C} °C"
     )
     print()
 

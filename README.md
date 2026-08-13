@@ -1,15 +1,12 @@
 # redwoods
-A map of coastal redwoods ([coast redwood ecology and distribution](https://www.savetheredwoods.org/redwoods/coast-redwoods/))
+
+This is the repo for [redwoods.earth](https://redwoods.earth) — a map of coastal redwoods ([coast redwood ecology and distribution](https://www.savetheredwoods.org/redwoods/coast-redwoods/)).
 
 https://youtu.be/cYCajfj5AYk?si=ihWj6SN6KaMkGdgS&t=86
 
 Compared to the [Wikipedia range map](https://upload.wikimedia.org/wikipedia/commons/5/5f/Sequoia_Sequoiadendron_range_map.png) (a static PNG based on late-1900s survey data), we're aiming for a map that is:
 - interactive
 - answering a different question: instead of "where are redwoods growing today?", we want to ask "where _could_ redwoods grow today, based on fog and rainfall (and possibly other factors like soil type)?" — which is very similar to asking "where _might_ redwoods have existed in the 1700s?"
-
--- TODO: Link to https://www.parks.ca.gov/?page_id=24723 in about page? And add more validation points based on these state parks
-
--- TODO: Same link as above, https://www.parks.ca.gov/?page_id=24732, note that it has both 'original growth' and 'current growth' on the map. Our map is essentially intending to pick up the _union_ of those two areas, i.e. to show 'original OR current growth' as suitable habitat, and put it on a zoomable interactive map, instead of a static image. And to derive it from something close to "first principles", i.e. sufficient rainfall and fog. Think about this and mention in the about page (part of the website)
 
 -- TODO: Link to nytimes article about world's tallest tree
 
@@ -207,14 +204,6 @@ This three-criteria model defines **Layer 2** (natural suitable habitat):
 
 ## Questions & Considerations
 
-### Questions for you:
-1. **Geographic extent**: Exact bounding box? All of coastal CA from Big Sur to Oregon border?
-2. **Resolution**: What final resolution for suitability model? (e.g., 30m, 100m?)
-3. **Time period**: Current year only, or multi-year analysis?
-4. **Redwood species**: Coast redwood (Sequoia sempervirens) only, or also Giant Sequoia (Sequoiadendron giganteum)?
-5. **Hosting**: Where will final map be hosted?
-6. **Ground truth**: How many points do you have? What format?
-
 ### Technical considerations:
 - **Fog is critical**: Coastal redwoods need fog drip. How to best model this?
   - Options: MODIS cloud frequency, proximity to coast + elevation interaction, climate moisture indices
@@ -228,11 +217,4 @@ This three-criteria model defines **Layer 2** (natural suitable habitat):
 - **Water sources**: Streams, watersheds (redwoods prefer riparian zones)
 - **Canopy height models**: Derived from LiDAR to identify tall trees
 - **Protected areas**: Not just parks but also conservation easements
-- **Property boundaries**: If relevant for land management scenarios
 
-## Next Steps
-1. Confirm project scope and answer questions above
-2. Set up Python environment with `uv`
-3. Create data acquisition scripts
-4. Begin with small pilot area (e.g., Muir Woods + surrounding area)
-5. Iterate on classification and modeling approach

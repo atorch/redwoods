@@ -47,6 +47,27 @@ PRISM_MONTHS = {
 # Bounding box margin (degrees)
 BBOX_MARGIN = 0.3  # ~30km at this latitude
 
+# Ticket 36: extend the study area north past the ground-truth-derived edge
+# (which stops at our northernmost CA points, right at the OR border) so we
+# can see whether the PHZM frost-hardiness mask tapers suitability off
+# gracefully approaching Oregon, rather than relying on the bbox itself as
+# an implicit latitude cutoff. 44.0 is the ticket's "first cut" — roughly
+# the Oregon coast through Florence/Newport. All ground-truth points stay
+# well south of this, so it only ever pushes max_lat north, never in.
+NORTH_BBOX_OVERRIDE_LAT = 44.0
+
+# The ground-truth-derived margin (BBOX_MARGIN off our westmost CA point,
+# Stout Grove) left min_lon at -124.384 — well east of the Oregon coastline
+# near Port Orford / Cape Blanco (~-124.4 to -124.57), which bulges further
+# west than the CA coast does. That clipped real OR land out of every raster
+# before the rule ever ran on it, producing a hard vertical edge mid-tile at
+# the zoom-8 tile boundary (x=39) rather than a natural coastline-following
+# edge. -126.5625 is that tile's western neighbor's west edge (one z=8 tile
+# west of the tile Port Orford falls in), which guarantees the whole tile has
+# real data; everything past the actual coastline is open ocean, which the
+# land mask already excludes, so there's no cost to the extra margin.
+WEST_BBOX_OVERRIDE_LON = -126.5625
+
 
 def load_ground_truth_points():
     """Load ground truth points and compute bounding box."""
@@ -59,8 +80,8 @@ def load_ground_truth_points():
 
     # Compute bounding box with margin
     min_lat = df['latitude'].min() - BBOX_MARGIN
-    max_lat = df['latitude'].max() + BBOX_MARGIN
-    min_lon = df['longitude'].min() - BBOX_MARGIN
+    max_lat = max(df['latitude'].max() + BBOX_MARGIN, NORTH_BBOX_OVERRIDE_LAT)
+    min_lon = min(df['longitude'].min() - BBOX_MARGIN, WEST_BBOX_OVERRIDE_LON)
     max_lon = df['longitude'].max() + BBOX_MARGIN
 
     bbox = {

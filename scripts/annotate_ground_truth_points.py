@@ -9,6 +9,9 @@ The first block of columns drives the live rule (suitability.combine):
   fog_days           — GOES-16 nighttime BTD climatology (study_area_fog_days_goes16.tif)
   coldest_tmin_c     — coldest-month mean tmin (PRISM)
   hottest_tmax_c     — hottest-month mean tmax (PRISM)
+  phzm_extreme_min_c — avg annual extreme min temp, 1991-2020 (USDA PHZM 2023 /
+                       PRISM), ticket 36 — catches hard-freeze sites the
+                       coldest-month *mean* tmin above doesn't
   is_suitable        — 1/0 by the rule in scripts/suitability.py
 
 The diagnostic block samples additional fog products at the same points so
@@ -45,6 +48,7 @@ from suitability import (
     FOG_DAYS_THRESHOLD,
     COLDEST_MONTH_TMIN_FLOOR_C,
     HOTTEST_MONTH_TMAX_CEILING_C,
+    PHZM_EXTREME_MIN_FLOOR_C,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -56,6 +60,7 @@ FOG_FILE = ROOT / "outputs" / "study_area_fog_days_goes16.tif"
 LAND_FILE = ROOT / "outputs" / "study_area_land_mask.tif"
 COLDEST_TMIN_FILE = ROOT / "outputs" / "study_area_coldest_month_tmin.tif"
 HOTTEST_TMAX_FILE = ROOT / "outputs" / "study_area_hottest_month_tmax.tif"
+PHZM_FILE = ROOT / "outputs" / "study_area_phzm_extreme_min_c.tif"
 
 # Diagnostic fog product inputs (ticket 34 + GOES-18 daytime as the other option).
 GOES18_DAY_FILE = ROOT / "outputs" / "study_area_fog_days_daytime.tif"
@@ -119,6 +124,7 @@ def annotate(csv_path, label):
     land = sample(LAND_FILE, coords)
     coldest = sample(COLDEST_TMIN_FILE, coords)
     hottest = sample(HOTTEST_TMAX_FILE, coords)
+    phzm = sample(PHZM_FILE, coords)
 
     # Diagnostic fog products
     fog_g18d = sample(GOES18_DAY_FILE, coords)
@@ -131,6 +137,7 @@ def annotate(csv_path, label):
     df["fog_days"] = [round(f, 1) if f is not None else None for f in fog]
     df["coldest_tmin_c"] = [round(c, 2) if c is not None else None for c in coldest]
     df["hottest_tmax_c"] = [round(h, 2) if h is not None else None for h in hottest]
+    df["phzm_extreme_min_c"] = [round(p, 2) if p is not None else None for p in phzm]
     df["fog_goes18_day"] = [round(v, 1) if v is not None else None for v in fog_g18d]
     df["fog_modis_dpm"] = [round(v, 2) if v is not None else None for v in fog_modis]
     df["fog_torre_dec"] = [round(v, 2) if v is not None else None for v in fog_torre_dec]
@@ -139,14 +146,15 @@ def annotate(csv_path, label):
     df["is_suitable"] = [
         int(bool(
             r is not None and f is not None and l is not None
-            and c is not None and h is not None
+            and c is not None and h is not None and p is not None
             and r >= RAINFALL_THRESHOLD_INCHES
             and f >= FOG_DAYS_THRESHOLD
             and l == 1
             and c >= COLDEST_MONTH_TMIN_FLOOR_C
             and h <= HOTTEST_MONTH_TMAX_CEILING_C
+            and p >= PHZM_EXTREME_MIN_FLOOR_C
         ))
-        for r, f, l, c, h in zip(rain, fog, land, coldest, hottest)
+        for r, f, l, c, h, p in zip(rain, fog, land, coldest, hottest, phzm)
     ]
 
     df.to_csv(csv_path, index=False, quotechar="'", quoting=csv.QUOTE_MINIMAL)
@@ -235,7 +243,8 @@ def main():
         f"Thresholds (live rule): rain ≥ {RAINFALL_THRESHOLD_INCHES} in, "
         f"fog ≥ {FOG_DAYS_THRESHOLD} nights (GOES-16 nighttime BTD), "
         f"coldest tmin ≥ {COLDEST_MONTH_TMIN_FLOOR_C} °C, "
-        f"hottest tmax ≤ {HOTTEST_MONTH_TMAX_CEILING_C} °C"
+        f"hottest tmax ≤ {HOTTEST_MONTH_TMAX_CEILING_C} °C, "
+        f"PHZM extreme min ≥ {PHZM_EXTREME_MIN_FLOOR_C} °C"
     )
     print()
     pos = annotate(POSITIVES_CSV, "positive ground-truth points")

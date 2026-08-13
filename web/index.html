@@ -13,7 +13,7 @@
     3. Tiles are loaded from ./tiles/redwood_suitability/
 
     PRODUCTION BOOTSTRAP:
-    - For the first prod deploy we ship only the 21 zoom-8 tiles (whole
+    - For the first prod deploy we ship only the 24 zoom-8 tiles (whole
       region, one zoom level). maxNativeZoom stretches them at higher zooms.
     - AVAILABLE_TILES below is an allowlist; getTileUrl returns a transparent
       PNG for any tile not in the set so we never 404 on missing tiles.
@@ -29,6 +29,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Northern California Coastal Redwood Habitat Suitability</title>
+
+    <link rel="icon" href="./favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -64,6 +69,13 @@
             margin: 0 0 10px 0;
             font-size: 18px;
             color: #2c5530;
+        }
+
+        .header-tree-icon {
+            width: 20px;
+            height: 20px;
+            vertical-align: -4px;
+            margin-right: 4px;
         }
 
         .info-panel p {
@@ -131,14 +143,29 @@
             margin-right: 4px;
             vertical-align: middle;
             border: 1px solid #333;
-            background: rgba(34, 139, 34, 0.8);
+            background: rgba(218, 165, 32, 0.8);
         }
 
         .swatch-circle {
-            background: rgba(255, 0, 0, 0.8);
+            background: #2c5530;
             border-radius: 50%;
             width: 12px;
             height: 12px;
+        }
+
+        .leaflet-popup-content .popup-summary {
+            font-size: 12px;
+            color: #444;
+            margin: 6px 0 0;
+        }
+
+        .leaflet-popup-content .popup-note {
+            font-size: 12px;
+            color: #555;
+            font-style: italic;
+            margin: 6px 0 0;
+            padding-top: 6px;
+            border-top: 1px solid #ddd;
         }
 
         @media (max-width: 768px) {
@@ -167,18 +194,19 @@
 
 <div class="info-panel" id="infoPanel">
     <div class="info-panel-header" id="infoPanelHeader">
-        <h2>🌲 Redwood Habitat Suitability</h2>
+        <h2><img src="./apple-touch-icon.png" alt="" class="header-tree-icon">Redwood Habitat Suitability</h2>
         <button type="button" id="toggleInfo" class="toggle-button" aria-label="Toggle info panel" aria-expanded="true">
             <span class="icon-collapsed">▼</span><span class="icon-expanded">▲</span>
         </button>
     </div>
     <div class="info-panel-content">
         <p><strong>Northern California Coast</strong></p>
-        <p>Green areas show where redwoods could naturally grow based on:</p>
+        <p>Gold areas show where redwoods could naturally grow based on:</p>
         <ul style="margin: 10px 0; padding-left: 20px; font-size: 13px;">
             <li>Wet season rainfall ≥ 20 inches (PRISM)</li>
             <li>Marine-layer fog overhead ≥ 50 nights/season<br>(GOES-16 nighttime BTD)</li>
             <li>Maritime temperature envelope (PRISM)</li>
+            <li>No hard winter freezes in a typical year (USDA PHZM)</li>
             <li>On land (not open water / wetland)</li>
         </ul>
         <p class="note">
@@ -211,19 +239,21 @@
 
     // Add suitability tile layer.
     //
-    // Bootstrap state: we only ship the 21 zoom-8 tiles that cover the whole
-    // study bbox. maxNativeZoom: 8 tells Leaflet to keep requesting z=8 tiles
-    // and scale them at higher map zooms, so the overlay stays visible as the
-    // user zooms in (just pixelated — fine for a regional view).
+    // Bootstrap state: we only ship the 24 zoom-8 tiles that cover the whole
+    // study bbox (extended north to 44°N per ticket 36, so this now includes
+    // the OR coast row, y=93). maxNativeZoom: 8 tells Leaflet to keep
+    // requesting z=8 tiles and scale them at higher map zooms, so the
+    // overlay stays visible as the user zooms in (just pixelated — fine for
+    // a regional view).
     //
     // AVAILABLE_TILES is the hardcoded allowlist. The overridden getTileUrl
     // returns a 1x1 transparent PNG for any "z/x/y" not in the set, so we
     // never 404 on tiles we haven't uploaded. When more tiles are added,
     // append to AVAILABLE_TILES (and raise maxNativeZoom as appropriate).
     const AVAILABLE_TILES = new Set([
-        '8/39/94', '8/39/95', '8/39/96', '8/39/97', '8/39/98', '8/39/99', '8/39/100',
-        '8/40/94', '8/40/95', '8/40/96', '8/40/97', '8/40/98', '8/40/99', '8/40/100',
-        '8/41/94', '8/41/95', '8/41/96', '8/41/97', '8/41/98', '8/41/99', '8/41/100'
+        '8/39/93', '8/39/94', '8/39/95', '8/39/96', '8/39/97', '8/39/98', '8/39/99', '8/39/100',
+        '8/40/93', '8/40/94', '8/40/95', '8/40/96', '8/40/97', '8/40/98', '8/40/99', '8/40/100',
+        '8/41/93', '8/41/94', '8/41/95', '8/41/96', '8/41/97', '8/41/98', '8/41/99', '8/41/100'
     ]);
     const TRANSPARENT_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
@@ -235,7 +265,7 @@
         }
     });
 
-    // minZoom=0 + minNativeZoom=8 lets Leaflet scale the 18 bootstrap z=8
+    // minZoom=0 + minNativeZoom=8 lets Leaflet scale the 24 bootstrap z=8
     // tiles all the way down to the world view — so the overlay stays
     // visible when the user zooms out past the study area.
     const suitabilityLayer = new FilteredTileLayer('./tiles/redwood_suitability/{z}/{x}/{y}.png', {
@@ -249,53 +279,124 @@
 
     // Ground truth points
     // Ground truth markers — the CSV is the single source of truth, shared
-    // with the Python pipeline. Required leading columns:
-    //   latitude,longitude,notes
-    // The annotate script (scripts/annotate_ground_truth_points.py) appends
-    // sampled-value columns after `notes`; the parser only consumes the first
-    // three. `notes` is single-quoted when it contains commas; unquoted
-    // otherwise.
+    // with the Python pipeline. `notes` is single-quoted when it contains
+    // commas, unquoted otherwise; every other field is a plain number. The
+    // header row drives which columns we pull out, so reordering or adding
+    // columns upstream (scripts/annotate_ground_truth_points.py) doesn't
+    // break parsing here.
     const markersLayer = L.layerGroup();
 
-    function parseGroundTruthCsv(text) {
-        const lines = text.trim().split(/\r?\n/).slice(1);  // drop header
-        return lines.map(line => {
-            const firstComma = line.indexOf(',');
-            const secondComma = line.indexOf(',', firstComma + 1);
-            const lat = parseFloat(line.slice(0, firstComma));
-            const lon = parseFloat(line.slice(firstComma + 1, secondComma));
-            const rest = line.slice(secondComma + 1);
-            let name;
-            if (rest.startsWith("'")) {
-                // Quoted notes — read up to the closing single quote.
-                const closing = rest.indexOf("'", 1);
-                name = closing === -1 ? rest.slice(1) : rest.slice(1, closing);
+    function parseCsvLine(line) {
+        // Minimal tokenizer: fields are comma-separated, except a single
+        // field may be wrapped in '...' (used for `notes` when it contains
+        // commas).
+        const fields = [];
+        let i = 0;
+        while (i <= line.length) {
+            if (line[i] === "'") {
+                const end = line.indexOf("'", i + 1);
+                fields.push(line.slice(i + 1, end === -1 ? line.length : end));
+                i = (end === -1 ? line.length : end + 1) + 1;  // skip quote + comma
             } else {
-                // Unquoted notes — read up to the next comma (or end of line).
-                const nextComma = rest.indexOf(',');
-                name = nextComma === -1 ? rest : rest.slice(0, nextComma);
+                const next = line.indexOf(',', i);
+                if (next === -1) {
+                    fields.push(line.slice(i));
+                    break;
+                }
+                fields.push(line.slice(i, next));
+                i = next + 1;
             }
-            return { lat, lon, name: name.trim() };
+        }
+        return fields;
+    }
+
+    function parseGroundTruthCsv(text) {
+        const lines = text.trim().split(/\r?\n/);
+        const header = parseCsvLine(lines[0]);
+        const col = name => header.indexOf(name);
+        const iLat = col('latitude'), iLon = col('longitude'), iNotes = col('notes'),
+              iRain = col('rainfall_inches'), iFog = col('fog_days'),
+              iCold = col('coldest_tmin_c'), iHot = col('hottest_tmax_c');
+
+        return lines.slice(1).map(line => {
+            const f = parseCsvLine(line);
+            return {
+                lat: parseFloat(f[iLat]),
+                lon: parseFloat(f[iLon]),
+                name: f[iNotes].trim(),
+                rainfallIn: parseFloat(f[iRain]),
+                fogDays: parseFloat(f[iFog]),
+                coldC: parseFloat(f[iCold]),
+                hotC: parseFloat(f[iHot]),
+            };
         });
     }
+
+    // Short, factual "why this reads as redwood habitat" line built from the
+    // same numbers that drive the suitability rule (scripts/suitability.py).
+    // Deliberately descriptive rather than a pass/fail verdict — a couple of
+    // our ground-truth points (e.g. Limekiln, ticket 35) are known-good
+    // redwood groves that miss on a raster-resolution technicality, so we
+    // don't want the copy asserting suitability, just reporting conditions.
+    function suitabilitySummary(point) {
+        const vals = [point.rainfallIn, point.fogDays, point.coldC, point.hotC];
+        if (vals.some(Number.isNaN)) return '';
+        const rain = Math.round(point.rainfallIn);
+        const fog = Math.round(point.fogDays);
+        const cold = Math.round(point.coldC);
+        const hot = Math.round(point.hotC);
+        return `About ${rain} in of wet-season rain, fog on ~${fog} nights of the ` +
+               `dry season, and winters that rarely dip below ${cold}°C ` +
+               `(summers rarely top ${hot}°C).`;
+    }
+
+    // Optional one-off local color, keyed by the point's `notes` text.
+    // Empty for everything except call-outs we've hand-written — this is
+    // plain HTML, not generated by the Python pipeline, so it's safe to
+    // edit directly and won't be touched by annotate_ground_truth_points.py.
+    //
+    // Sources for the Tres Sendas note: East Bay Regional Park District,
+    // "New Bridge Built on Fallen Redwood Tree in Reinhardt Redwood Regional
+    // Park" (Nov 2024); Wikipedia "Dr. Aurelia Reinhardt Redwood Regional
+    // Park" (California Historical Landmark #962, logging history).
+    const SPECIAL_NOTES = {
+        'Redwood Regional Park, near the Tres Sendas bridge':
+            'This grove is third-growth, not old-growth: the original redwoods here ' +
+            'were logged 1845–60 to build Gold Rush–era San Francisco and ' +
+            'Oakland, regrew, then were logged again after the 1906 earthquake spiked ' +
+            'lumber demand — the site is California Historical Landmark #962. The ' +
+            'bridge itself is built from a redwood felled by a 2017 storm; true to the ' +
+            'species, it’s still alive, resprouting a new trunk from its root ball ' +
+            'a few feet away.'
+    };
+
+    // Ground truth markers reuse the favicon artwork directly (same tiered-
+    // conifer glyph, same greens) so the pins and the tab icon read as one
+    // mark. iconAnchor sits at the trunk base so the icon "stands" on its
+    // coordinate like a pin, not centered over it.
+    const treeIcon = L.icon({
+        iconUrl: './apple-touch-icon.png',
+        iconSize: [32, 32],
+        iconAnchor: [16, 31],
+        popupAnchor: [0, -28]
+    });
 
     fetch('./ground_truth_points.csv')
         .then(r => r.text())
         .then(parseGroundTruthCsv)
         .then(points => {
             points.forEach(point => {
-                L.circleMarker([point.lat, point.lon], {
-                    radius: 8,
-                    fillColor: '#ff0000',
-                    color: '#000',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                })
-                .bindPopup(`<strong>${point.name}</strong><br>` +
-                           `Lat: ${point.lat.toFixed(4)}<br>` +
-                           `Lon: ${point.lon.toFixed(4)}<br>` +
-                           `<em>✓ Suitable habitat</em>`)
+                const mapsUrl = `https://www.google.com/maps?q=${point.lat},${point.lon}`;
+                const coords = `${point.lat.toFixed(3)}, ${point.lon.toFixed(3)}`;
+                const summary = suitabilitySummary(point);
+                const special = SPECIAL_NOTES[point.name];
+                const popup =
+                    `<strong>${point.name}</strong><br>` +
+                    `<a href="${mapsUrl}" target="_blank" rel="noopener">${coords}</a>` +
+                    (summary ? `<p class="popup-summary">${summary}</p>` : '') +
+                    (special ? `<p class="popup-note">${special}</p>` : '');
+                L.marker([point.lat, point.lon], { icon: treeIcon })
+                .bindPopup(popup)
                 .addTo(markersLayer);
             });
         });
