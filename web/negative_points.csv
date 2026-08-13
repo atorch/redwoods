@@ -11,3 +11,4 @@ latitude,longitude,notes,rainfall_inches,fog_days,coldest_tmin_c,hottest_tmax_c,
 41.89563633054773,-122.92510090883356,'Dry Lake Mountain, CA',39.06,51.3,-1.75,25.54,0,4.63,,,,43.8,-11.28
 43.86737702712647,-122.84419572426891,'Kloster Mountain, OR',35.55,89.4,0.96,26.0,0,10.11,,,,,-6.5
 44.4131472176627,-123.90469317000338,'Siuslaw National Forest, OR',,,,,0,13.42,,,,,
+42.3342,-124.42182,'Cape Sebastian State Scenic Corridor, OR -- not a real redwood site, but climatically near-identical to true habitat (rain/fog/coldest_tmin/phzm all in-range, correctly scores is_suitable=1); kept as reference, not a threshold-tuning target -- its absence of redwoods is best explained by competition/dispersal history north of the documented range edge, which this model does not attempt to capture',68.76,92.0,4.97,20.2,1,12.26,,,,,-1.88
