@@ -65,3 +65,37 @@ Start with **Option B** (monthly average fog hours/day):
 - This is primarily a research/investigation ticket
 - Decision should be documented before proceeding to full processing
 - Consider computational trade-offs: processing time vs storage vs flexibility
+
+## Investigation Results (2026-04-11)
+
+**Fog Detection Approach Confirmed:**
+- Using **Brightness Temperature Difference (BTD)** method
+- Formula: BTD = BT_Ch13 - BT_Ch7 (in Kelvin or Celsius)
+- Threshold: BTD > 0 indicates fog/low stratus
+
+**Why BTD Works:**
+- Fog (small water droplets) has lower emissivity at 3.9 µm than 10.3 µm
+- Results in temperature difference between channels
+- High clouds (ice) show similar temps at both wavelengths (BTD ≈ 0 or negative)
+
+**Data Sources:**
+- Channel 7 (3.9 µm): `ABI-L2-CMIPC` product, files with `C07`
+- Channel 13 (10.3 µm): `ABI-L2-CMIPC` product, files with `C13`
+- Both available on public AWS S3
+
+**Temporal Resolution:**
+- GOES-16 provides 5-15 minute data
+- For "fog past noon" metric: sample afternoon hours (12:00-18:00 local)
+- Local time conversion: Bay Area is UTC-7 (PDT) or UTC-8 (PST)
+- Afternoon local = 19:00-01:00 UTC (PDT) or 20:00-02:00 UTC (PST)
+
+**Recommended Metric (Option B with A derivable):**
+- Primary: Calculate daily BTD fields for afternoon hours
+- Derive: "Is fog present after noon?" (binary, BTD > threshold)
+- Aggregate: Count days per dry season with afternoon fog
+- Output: Single raster showing "days/season with afternoon fog ≥ 80"
+
+**Validation:**
+- Compare against fog.today visualizations (uses same data source)
+- Validate against NOAA weather station fog observations
+- Check correlation with known foggy areas (SF coast, Marin headlands)

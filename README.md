@@ -1,5 +1,30 @@
 # redwoods
-A map of coastal redwoods
+
+This is the repo for [redwoods.earth](https://redwoods.earth) — a map of coastal redwoods ([coast redwood ecology and distribution](https://www.savetheredwoods.org/redwoods/coast-redwoods/)).
+
+https://youtu.be/cYCajfj5AYk?si=ihWj6SN6KaMkGdgS&t=86
+
+Compared to the [Wikipedia range map](https://upload.wikimedia.org/wikipedia/commons/5/5f/Sequoia_Sequoiadendron_range_map.png) (a static PNG based on late-1900s survey data), we're aiming for a map that is:
+- interactive
+- answering a different question: instead of "where are redwoods growing today?", we want to ask "where _could_ redwoods grow today, based on fog and rainfall (and possibly other factors like soil type)?" — which is very similar to asking "where _might_ redwoods have existed in the 1700s?"
+
+-- TODO: Link to nytimes article about world's tallest tree
+
+## Quick Start: Viewing Results
+
+**QGIS (recommended):**
+```bash
+qgis outputs/study_area_redwood_suitable.tif
+```
+
+**Web browser (interactive tiles):**
+```bash
+cd web
+python3 -m http.server 8000
+# Open http://localhost:8000/
+```
+
+Tiles live under `web/tiles/` so `web/` is a self-contained static site — the same directory is uploaded to Cloudflare Pages for production.
 
 ## Project Goal
 Create an interactive web-based map showing:
@@ -8,7 +33,7 @@ Create an interactive web-based map showing:
 
 **Key insight**: Layer 2 represents both historical range (ca. 1750, pre-settlement) and hypothetical suitable habitat today. The same environmental criteria apply: if conditions support redwoods naturally, they likely existed there historically and could exist there today absent urban development and invasive species.
 
-Focus area: California Bay Area and Pacific coast (north of San Simeon)
+Focus area: California Bay Area and Pacific coast
 
 ## Technology Stack (Draft)
 
@@ -32,11 +57,33 @@ Focus area: California Bay Area and Pacific coast (north of San Simeon)
 Scripts can be run using `uv` which automatically manages Python dependencies:
 
 ```bash
-uv run --with rasterio --with numpy python scripts/<script_name>.py
+uv run python scripts/<script_name>.py
 ```
 
-Example scripts:
+For scripts needing extra dependencies:
+```bash
+uv run --with rasterio --with pandas --with shapely python scripts/<script_name>.py
+```
+
+### Available Scripts
+
+**Data verification:**
 - `scripts/check_prism_precipitation.py` - Sanity check PRISM precipitation data at Oakland, CA
+
+**Active pipeline:**
+- `scripts/01_process_study_area_rainfall.py` — PRISM wet-season rainfall, ≥ 20" mask
+- `scripts/16_download_multiyear_goes16.py` — fetch GOES-16 Ch7/Ch13 for 06–12 UTC, 4 weeks × 5 years
+- `scripts/11_create_real_fog_layer.py` — nighttime BTD (Ch13−Ch7) → fog-nights/season
+- `scripts/17_build_land_mask.py` — water/wetland exclusion from USDA CDL
+- `scripts/build_temperature_masks.py` — PRISM tmin/tmax → maritime temperature envelope
+- `scripts/04_combine_suitability.py` — rain ∧ fog ∧ land ∧ temperate → suitability raster
+- `scripts/13_generate_web_tiles.py` — bake the raster into web map tiles
+
+`scripts/18_download_daytime_goes18.py` + `scripts/19_create_daytime_fog_layer.py`
+build the daytime GOES-18 fog layer, kept around as a diagnostic
+(`scripts/annotate_ground_truth_points.py` samples it for comparison) but no
+longer the live fog input. Other earlier numbered scripts (`02_*`–`15_*`) are
+superseded experiments preserved in git history.
 
 ## Data Sources
 
@@ -53,12 +100,16 @@ Example scripts:
 
 Core environmental data needed:
 1. **Fog/coastal moisture**:
-   - GOES-16 satellite data (NOAA) - afternoon fog persistence
-   - High temporal resolution for "fog past noon" analysis
+   - GOES-16 ABI Channels 7 (3.9 µm) and 13 (10.3 µm) — nighttime
+     brightness-temperature difference (Ch13−Ch7) flags low water cloud
+     (NESDIS nighttime fog/low-cloud detection method); aggregated to
+     fog-nights/season over a 4-week × 5-year (2020–2024) sample
 2. **Climate**:
-   - PRISM monthly precipitation data - wet season (Nov-Apr) totals
-3. **Geography**:
-   - Latitude filter: north of San Simeon (~35.6°N)
+   - PRISM monthly precipitation data — wet-season (Nov–Apr) totals
+   - PRISM monthly tmin/tmax normals — coldest-month / hottest-month
+     maritime envelope (rejects cold Cascade interior, hot Central Valley)
+3. **Land cover**:
+   - USDA Cropland Data Layer — drop open-water and wetland pixels
 
 **Optional refinements** (future work):
 - Topography: USGS 3DEP DEM → slope, aspect, topographic wetness index
@@ -77,13 +128,15 @@ Academic heuristic for identifying historical (pre-settlement) redwood presence:
 > "If the place is north of San Simeon, fog currently lasts past noon 80 days/dry season,
 > and the place has more than 20 inches/year of rain in the wet season, it had redwoods in 1750."
 
+The original heuristic uses latitude as a coarse proxy for the cold-interior /
+hot-Central-Valley boundary. In implementation we dropped the latitude filter
+in favor of a maritime temperature envelope (PRISM tmin/tmax) plus a land mask
+(USDA CDL) — more principled, and they reject the same false-positives that the
+35.6°N cut was meant to catch.
+
 ### Data Requirements for This Heuristic
 
-1. **Geographic boundary**: North of San Simeon
-   - **Status**: ✓ Straightforward geographic filter
-   - **Implementation**: Latitude threshold (~35.6°N)
-
-2. **Fog persistence**: Fog lasts past noon 80+ days during dry season (May-Oct)
+1. **Fog persistence**: Fog lasts past noon 80+ days during dry season (May-Oct)
    - **Status**: ⚠️ **CRITICAL DATA GAP** - need time-of-day + seasonal data
    - **Current plan**: MODIS cloud frequency, relative humidity (insufficient)
    - **Gap**: Need time-of-day specificity (past noon) and seasonal aggregation
@@ -102,7 +155,7 @@ Academic heuristic for identifying historical (pre-settlement) redwood presence:
      - Create raster: "average days/year with afternoon fog" or monthly breakdowns
    - **Question**: Monthly averages likely sufficient vs. daily rasters
 
-3. **Wet season precipitation**: 20+ inches during wet season (Nov-Apr)
+2. **Wet season precipitation**: 20+ inches during wet season (Nov-Apr)
    - **Status**: ✓ Covered by PRISM
    - **Current plan**: PRISM monthly precipitation normals
    - **Implementation**: Aggregate Nov-Apr months, create 20" threshold layer
@@ -151,14 +204,6 @@ This three-criteria model defines **Layer 2** (natural suitable habitat):
 
 ## Questions & Considerations
 
-### Questions for you:
-1. **Geographic extent**: Exact bounding box? All of coastal CA from Big Sur to Oregon border?
-2. **Resolution**: What final resolution for suitability model? (e.g., 30m, 100m?)
-3. **Time period**: Current year only, or multi-year analysis?
-4. **Redwood species**: Coast redwood (Sequoia sempervirens) only, or also Giant Sequoia (Sequoiadendron giganteum)?
-5. **Hosting**: Where will final map be hosted?
-6. **Ground truth**: How many points do you have? What format?
-
 ### Technical considerations:
 - **Fog is critical**: Coastal redwoods need fog drip. How to best model this?
   - Options: MODIS cloud frequency, proximity to coast + elevation interaction, climate moisture indices
@@ -172,11 +217,4 @@ This three-criteria model defines **Layer 2** (natural suitable habitat):
 - **Water sources**: Streams, watersheds (redwoods prefer riparian zones)
 - **Canopy height models**: Derived from LiDAR to identify tall trees
 - **Protected areas**: Not just parks but also conservation easements
-- **Property boundaries**: If relevant for land management scenarios
 
-## Next Steps
-1. Confirm project scope and answer questions above
-2. Set up Python environment with `uv`
-3. Create data acquisition scripts
-4. Begin with small pilot area (e.g., Muir Woods + surrounding area)
-5. Iterate on classification and modeling approach

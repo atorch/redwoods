@@ -220,3 +220,29 @@ data/**/*shp
 data/**/*dbf
 data/**/*shx
 data/**/*cpg
+
+data/**/*nc
+
+# ESRI Arc/Info Binary Grid components (e.g. Torregrosa decadal FLCC rasters)
+data/**/*adf
+data/**/*dat
+data/**/*nit
+data/**/__MACOSX/
+
+# ESRI BIL components (e.g. USDA PHZM grid, ticket 36)
+data/**/*bil
+data/**/*hdr
+
+data/*~
+
+# Web tiles (regenerate with scripts/13_generate_web_tiles.py).
+# /tiles/ scopes the ignore to the top-level legacy output dir only.
+# web/tiles/ is the current output dir — also ignored so the PNG blobs
+# stay out of git; Cloudflare Pages uploads them straight from disk.
+/tiles/
+web/tiles/
+
+data/goes16_multiyear/*
+
+# Reference papers (kept locally for reading; not committed).
+*.pdf

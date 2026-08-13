@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About — Northern California Coastal Redwood Habitat Suitability</title>
+
+    <link rel="icon" href="./favicon/redwood.svg" type="image/svg+xml">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="./favicon/apple-touch-icon-180.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-canvas: #e9e6dd;
+            --page: #f7f4ec;
+            --cream-soft: #eef2ea;
+            --border: #e3ddcd;
+            --ink: #26332b;
+            --ink-soft: #3d463e;
+            --muted: #4c554c;
+            --muted-2: #77806f;
+            --muted-3: #9aa08e;
+            --green: #2e5c3f;
+            --green-dark: #1f4230;
+            --gold: #c9a44a;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 24px 80px;
+            background: var(--bg-canvas);
+            font-family: 'Source Sans 3', sans-serif;
+            color: var(--ink-soft);
+            box-sizing: border-box;
+        }
+
+        a {
+            color: var(--green);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(46, 92, 63, .35);
+        }
+
+        a:hover {
+            color: var(--green-dark);
+        }
+
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            background: var(--page);
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(38, 51, 43, .14);
+            padding: 56px 90px 64px;
+            box-sizing: border-box;
+        }
+
+        .back-link {
+            display: inline-block;
+            font: 500 13.5px 'Source Sans 3', sans-serif;
+        }
+
+        .page-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 34px;
+        }
+
+        h1 {
+            margin: 0;
+            font: 700 34px 'Source Serif 4', serif;
+            color: var(--ink);
+            letter-spacing: -.01em;
+        }
+
+        .lede {
+            margin: 14px 0 0;
+            font: 400 18px/1.55 'Source Serif 4', serif;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        .divider {
+            width: 56px;
+            height: 3px;
+            background: var(--gold);
+            margin: 30px 0;
+            border: none;
+        }
+
+        h2 {
+            margin: 34px 0 12px;
+            font: 600 21px 'Source Serif 4', serif;
+            color: var(--ink);
+        }
+
+        h2:first-of-type {
+            margin-top: 0;
+        }
+
+        p {
+            margin: 0 0 14px;
+            font: 400 15.5px/1.65 'Source Sans 3', sans-serif;
+            text-wrap: pretty;
+        }
+
+        .callout {
+            margin: 22px 0 0;
+            background: var(--cream-soft);
+            border-radius: 9px;
+            padding: 16px 20px;
+            font: 400 14.5px/1.6 'Source Sans 3', sans-serif;
+        }
+
+        .callout strong {
+            display: block;
+            font: 600 14.5px 'Source Sans 3', sans-serif;
+            color: var(--green);
+            margin-bottom: 2px;
+        }
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 14px 18px;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+
+        .method-grid dt {
+            font: 600 14px 'Source Sans 3', sans-serif;
+            color: var(--green);
+        }
+
+        .method-grid dd {
+            margin: 0;
+            font: 400 14px/1.55 'Source Sans 3', sans-serif;
+            color: var(--muted);
+        }
+
+        ul.links {
+            font: 400 15px/1.65 'Source Sans 3', sans-serif;
+            padding-left: 22px;
+            margin: 0 0 14px;
+        }
+
+        ul.links li {
+            margin: 6px 0;
+        }
+
+        .footnote {
+            font: 400 13px/1.6 'Source Sans 3', sans-serif;
+            color: var(--muted-2);
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a class="back-link" href="./">← Back to map</a>
+
+        <div class="page-head">
+            <img src="./favicon/redwood.svg" width="30" height="30" alt="">
+            <h1>About this map</h1>
+        </div>
+        <p class="lede">An interactive map of where coastal redwoods <em>could</em> grow along the Northern California coast — based on fog and rainfall.</p>
+        <hr class="divider">
+
+        <h2>What question is this answering?</h2>
+        <p>
+            The <a href="https://upload.wikimedia.org/wikipedia/commons/5/5f/Sequoia_Sequoiadendron_range_map.png" target="_blank" rel="noopener">Wikipedia range map</a> is a static PNG drawn from survey data. It answers: <em>where are redwoods growing today?</em> California State Parks publishes a similar <a href="https://www.parks.ca.gov/?page_id=24723" target="_blank" rel="noopener">coastal redwood parks map</a> that goes a step further by distinguishing <em>original</em> from <em>current</em> growth — together they sketch the historical and modern footprints.
+        </p>
+        <p>
+            <a href="https://redwoods.earth">This map</a> asks a different question: <em>where could redwoods grow today, given enough fog and rainfall?</em> That's very close to asking where redwoods <em>might have existed in the 1700s</em>, before urban development and logging reshaped the landscape — roughly the union of "original" and "current" growth on the State Parks map, but derived from physical conditions (rainfall + fog) rather than survey data, and zoomable instead of static.
+        </p>
+        <div class="callout">
+            <strong>Why fog?</strong>
+            During the rainless summer, coastal redwoods harvest moisture from fog directly through their needles and drip the rest to the forest floor — supplying up to 40% of their annual water and effectively letting the trees water themselves when no rain is falling. A <a href="https://link.springer.com/article/10.1007/s004420050683" target="_blank" rel="noopener">three-year study in northern California</a> found the canopy itself roughly doubles fog-water input to the ground: about 34% of annual water under redwoods came from fog drip off the trees, versus 17% in nearby areas without them. (See also <a href="https://www.savetheredwoods.org/redwoods-magazine/autumn-winter-2024/the-science-of-redwoods-and-fog/" target="_blank" rel="noopener">Save the Redwoods League</a> on the science of redwoods and fog.)
+        </div>
+
+        <h2>How it works</h2>
+        <p>
+            We follow a simple heuristic: a place likely supported redwoods if it receives at least 20 inches of rain in the wet season, stays inside the maritime temperature envelope, doesn't see hard winter freezes in a typical year, has marine-layer fog overhead on at least 50 nights of the dry season, and is on land rather than open water or wetland.
+        </p>
+        <dl class="method-grid">
+            <dt>Rainfall</dt>
+            <dd>PRISM 800 m wet-season precipitation normals (Nov–Apr).</dd>
+
+            <dt>Fog</dt>
+            <dd>GOES-16 satellite Channels 7 (3.9 µm) and 13 (10.3 µm). At night, low water clouds emit much less in the shorter-wavelength channel than the longer one, producing a positive brightness-temperature difference (BTD) that uniquely identifies marine-layer fog — the standard <a href="https://cimss.ssec.wisc.edu/goes/OCLOFactSheetPDFs/ABIQuickGuide_NightFogBTD.pdf" target="_blank" rel="noopener">NESDIS nighttime fog detection method</a>. We sample four weeks per dry season (May / Jun / Aug / Sep) across 2020–2024 in the 06–12 UTC window — 11 PM – 5 AM PST — when BTD is uncontaminated by solar reflection. A "fog night" is any night with at least one in-window scan flagged as low cloud at that pixel; the count is extrapolated to the 184-day dry season and the 50-night threshold is tuned against ground truth.</dd>
+
+            <dt>Temperature</dt>
+            <dd>Places where the coldest month averages below ~-3 °C or the hottest month averages above ~30 °C are excluded. Coast redwoods are a maritime species; per the <a href="https://www.srs.fs.usda.gov/pubs/misc/ag_654/volume_1/sequoia/sempervirens.htm" target="_blank" rel="noopener">USDA <em>Silvics of North America</em></a>, the native range sits between mean annuals of 10–16 °C with rare drops below -9 °C and rare highs above 38 °C. This filter rejects the cold Cascade / Klamath interior and the hot Central Valley. PRISM 30-year monthly tmin / tmax normals.</dd>
+
+            <dt>Frost hardiness</dt>
+            <dd>Mean January tmin can look mild even where occasional Arctic outbreaks reach far colder, since a monthly normal is an average, not a worst case. We add the USDA Plant Hardiness Zone Map's average annual extreme minimum temperature (the mean, across 1991–2020, of each year's single coldest night) and exclude places colder than -5 °C by that measure — a proxy for "do hard freezes happen here?" that a monthly mean can't capture. This mainly matters at the northern end of the range, in Oregon.</dd>
+
+            <dt>Land mask</dt>
+            <dd>Open water and wetlands are dropped using the USDA Cropland Data Layer, so the suitability layer reflects land where redwoods could actually root rather than the pixels of bay and ocean a coastal raster necessarily includes.</dd>
+        </dl>
+        <p style="margin-top: 16px;">
+            Gold pixels on the map are places that meet all five criteria. Tree markers are ground-truth redwood locations used to sanity-check the model.
+        </p>
+        <p>
+            The suitable area extends a bit past the documented native range into southern Oregon — the biological range edge (the Chetco River drainage near Brookings) sits about 10 km inside Oregon, past the state-line cutoff drawn on most range maps. Further north, coast redwoods don't occupy the coast even where our climate-only criteria pass, partly because the marine fog regime weakens past Cape Blanco, partly because occasional severe winter freezes there test the edge of what redwood seedlings tolerate, and partly because faster-growing competitors (Sitka spruce, western hemlock) already hold that niche — biotic competition our rule doesn't model. Read this map as <em>where redwoods could persist climatically</em>, not a claim about where they grow today.
+        </p>
+
+        <h2>Links</h2>
+        <ul class="links">
+            <li><a href="https://www.savetheredwoods.org/redwoods/coast-redwoods/" target="_blank" rel="noopener">Coast redwood ecology and distribution</a> — Save the Redwoods League</li>
+            <li><a href="https://research.fs.usda.gov/treesearch/41148" target="_blank" rel="noopener">Foliar uptake of fog in the coast redwood ecosystem</a> — US Forest Service research on how redwoods drink fog directly through their leaves</li>
+            <li><a href="https://upload.wikimedia.org/wikipedia/commons/5/5f/Sequoia_Sequoiadendron_range_map.png" target="_blank" rel="noopener">Wikipedia range map</a> (the map this project is contrasted with)</li>
+            <li><a href="https://www.parks.ca.gov/?page_id=24723" target="_blank" rel="noopener">California State Parks: coastal redwood parks</a> — includes a static map showing original-growth vs current-growth extent</li>
+            <li><a href="https://youtu.be/cYCajfj5AYk?si=ihWj6SN6KaMkGdgS&t=86" target="_blank" rel="noopener">Background video</a> on coastal redwoods</li>
+        </ul>
+
+        <p class="footnote">
+            Satellites see <em>cloud tops</em>, not whether cloud is actually
+            touching the canopy and dripping moisture onto the forest floor.
+            Nighttime marine-layer presence is a strong proxy for the morning
+            and daytime conditions that produce fog interception in coastal
+            canyons — coastal sites with frequent overnight fog overhead also
+            tend to have lingering canopy contact at dawn — but it is still a
+            proxy. We also evaluated a daytime visible-channel signal and
+            published MODIS / Torregrosa fog rasters; the nighttime BTD layer
+            cleanly separates the redwood ground-truth points from inland
+            control sites, while the other products do not.
+        </p>
+    </div>
+</body>
+</html>
