@@ -2,16 +2,6 @@
 <!--
     Northern California Coastal Redwood Habitat Suitability - Interactive Map
 
-    VIEWING INSTRUCTIONS:
-    1. Start HTTP server from the web/ directory:
-       cd /home/adrian/redwoods/web
-       python3 -m http.server 8000
-
-    2. Open in browser:
-       http://localhost:8000/
-
-    3. Tiles are loaded from ./tiles/redwood_suitability/
-
     PRODUCTION BOOTSTRAP:
     - For the first prod deploy we ship only the 24 zoom-8 tiles (whole
       region, one zoom level). maxNativeZoom stretches them at higher zooms.
@@ -36,7 +26,9 @@
     <link rel="apple-touch-icon" href="./favicon/apple-touch-icon-180.png">
 
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+        crossorigin="anonymous" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -537,7 +529,9 @@
 </div>
 
 <!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+    crossorigin="anonymous"></script>
 
 <script>
     // Initial view: Grove of Old Trees at zoom 8, where the bootstrap z=8
@@ -696,6 +690,18 @@
     // "New Bridge Built on Fallen Redwood Tree in Reinhardt Redwood Regional
     // Park" (Nov 2024); Wikipedia "Dr. Aurelia Reinhardt Redwood Regional
     // Park" (California Historical Landmark #962, logging history).
+    //
+    // Source for the Redwood National Park note: NYT, "The Hidden Tallest
+    // Tree in the World" (Aug 2022) on Hyperion's secret, off-limits
+    // location.
+    //
+    // Sources for the Grove of Old Trees note: LandPaths and Save the
+    // Redwoods League (via Wikipedia, "Grove of Old Trees") on the 1990s
+    // timber harvest threat and the 2000 purchase/easement.
+    //
+    // Source for the Muir Woods note: NPS, "History of Muir Woods"
+    // timeline (Throckmorton's private hunting retreat, the Kents' 1905
+    // purchase and 1908 donation).
     const SPECIAL_NOTES = {
         'Redwood Regional Park, near the Tres Sendas bridge':
             'This grove is third-growth, not old-growth: the original redwoods here ' +
@@ -704,7 +710,23 @@
             'lumber demand. <a href="https://www.ebparks.org/about-us/whats-new/news/new-bridge-built-fallen-redwood-tree-reinhardt-redwood-regional-park" ' +
             'target="_blank" rel="noopener">The bridge itself</a> is built from a redwood felled by a 2017 storm; true to the ' +
             'species, it’s still alive, resprouting a new trunk from its root ball ' +
-            'a few feet away.'
+            'a few feet away.',
+        'Redwood National Park':
+            'Home to <a href="https://www.nytimes.com/2022/08/02/us/hyperion-tree-redwood-california.html" ' +
+            'target="_blank" rel="noopener">Hyperion</a>, the tallest tree in the world at over 380 feet — its exact ' +
+            'location is kept secret and off-limits to visitors to protect the tree and the fragile grove around it.',
+        'Grove of Old Trees':
+            'A rare stand of old-growth coast redwood, saved from a 1990s timber harvest plan by neighborhood ' +
+            'activism and purchased by <a href="https://www.landpaths.org/grove-of-old-trees/" ' +
+            'target="_blank" rel="noopener">LandPaths</a> in 2000, now under a permanent conservation easement. ' +
+            'Almost all of the redwood forest that once covered this stretch of Sonoma County was cleared by loggers in the 1800s and never grew back. ' +
+            'On satellite imagery, you\'ll notice vineyards only a few hundred feet away from some of these old-growth trees.',
+        'Muir Woods, near Bridge 2':
+            'A rare old-growth grove this close to San Francisco, kept intact by a private owner who fenced it as ' +
+            'a hunting retreat, then bought in 1905 by William and Elizabeth Kent to save it from logging and a ' +
+            'proposed reservoir. The Kents donated the land to the federal government in 1908, creating ' +
+            '<a href="https://www.nps.gov/muwo/learn/historyculture/historyofmuirwoods.htm" target="_blank" ' +
+            'rel="noopener">Muir Woods National Monument</a> — the first national monument built from privately donated land.'
     };
 
     // Popup card: title/subtitle split from `notes` on the first ", ", a
@@ -782,17 +804,6 @@
             toggleBtn.setAttribute('aria-expanded', nowCollapsed ? 'false' : 'true');
         });
     })();
-
-    // Instructions for local development
-    console.log('🌲 Redwood Habitat Suitability Map');
-    console.log('');
-    console.log('To view tiles locally:');
-    console.log('1. cd /home/adrian/redwoods/web');
-    console.log('2. python -m http.server 8000');
-    console.log('3. Open http://localhost:8000/');
-    console.log('');
-    console.log('Fog input: GOES-16 Ch13−Ch7 BTD at 06-12 UTC (11 PM - 5 AM PST), 2020-2024');
-
 </script>
 
 </body>
