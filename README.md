@@ -1,12 +1,12 @@
 # redwoods
 
-This is the repo for [redwoods.earth](https://redwoods.earth).
+Welcome to the repo for [redwoods.earth](https://redwoods.earth).
 
-This repo was largely vibe coded (slop warning; don't take anything here too seriously); that said, if you're here, I hope you'll find it delightful.
+This project was largely vibe coded (slop warning; don't take anything here too seriously); that said, if you're here, I hope you'll find it delightful.
 
-Want to help make the repo better, and improve the map? Open an [issue](https://github.com/atorch/redwoods/issues), or send me a PR to add to the list of [grouth truth points](web/ground_truth_points.csv).
+Want to help make the repo better, and improve the map? Open an [issue](https://github.com/atorch/redwoods/issues), or send me a PR to add to the list of [ground truth points](web/ground_truth_points.csv).
 
-Compared to the [Wikipedia range map](https://upload.wikimedia.org/wikipedia/commons/5/5f/Sequoia_Sequoiadendron_range_map.png), redwoods.earth is:
+Compared to the [Wikipedia range map](https://upload.wikimedia.org/wikipedia/commons/5/5f/Sequoia_Sequoiadendron_range_map.png), [redwoods.earth](https://redwoods.earth) is:
 - interactive
 - answering a different question: instead of "where are redwoods [growing today](https://youtu.be/cYCajfj5AYk?si=ihWj6SN6KaMkGdgS&t=86)?", it asks "where _could_ redwoods grow today, based on fog and rainfall?" -- which is very similar to asking "where _might_ redwoods have existed in the 1700s?"
 
